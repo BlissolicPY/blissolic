@@ -32,6 +32,38 @@ Next concrete step: deploy to blissolic.com. Nothing else outstanding.
 
 ## Decisions & Rationale
 
+- **Per-tile follower counts (added 2026-07-28).** YouTube 25.6K, Discord members, TikTok and X
+  followers, live and on the same 5-minute timer as the hero pill.
+  - Sources, all keyless: Discord's own invite API (`/api/v10/invites/bliss?with_counts=true` →
+    `approximate_member_count`), and mixerno's `tiktok-user-counter` / `twitter-user-counter`.
+    Identity was confirmed on each (`user.name = "Blissolic"`) rather than assumed from the handle.
+  - **CORS must be tested from the page, not from a terminal.** Discord returns no
+    `Access-Control-Allow-Origin` header to a PowerShell probe because that request carries no
+    `Origin` — it looked dead and isn't. All four were re-verified with `fetch()` from the live
+    origin.
+  - **mixerno returns TikTok's count as a STRING** (`"1706"`). The existing `Number.isFinite`
+    guard silently dropped it, so every reader now goes through `Number()` first.
+  - **Under 10,000 prints in full with separators** (`1,875`), only larger counts get abbreviated.
+    Abbreviating small numbers gives "1.02K" for 1,028, which reads worse than the real figure.
+  - The YouTube tile reuses the hero pill's fetched number instead of requesting again, so the two
+    can never disagree.
+  - A source that is dead on first load hides its slot (`[data-state="dead"]`) rather than sitting
+    on an em dash; one that rots mid-session keeps the last good number.
+
+- **Cursor trail (`cursor.js`) leaves the native cursor visible.** Hiding it and drawing a dot is
+  the fashionable version and it is worse — people lose the pointer, text-selection and link
+  affordances vanish, and any frame drop makes the page feel broken. This is a lagging glow behind
+  the real pointer instead.
+  - The "motion blur" is **squash-and-stretch, not a blur filter**: the glow is rotated to face the
+    direction of travel and stretched along it in proportion to speed, with `scaleY = 1/√scaleX` so
+    the area stays roughly constant. A filter alone just looks out of focus.
+  - Disabled entirely on `(pointer: coarse)` and `prefers-reduced-motion`, `pointer-events: none`
+    so it can never eat a click, and the rAF loop **parks itself** once the glow settles so an idle
+    tab costs nothing.
+  - `mix-blend-mode: screen` so it lifts off the dark page instead of greying it.
+  - Note: headless Chromium throttles rAF to ~1fps when nothing forces a paint, so this cannot be
+    verified by evaluating transforms in Playwright — check it in a real browser.
+
 - **Background photograph (`assets/bg.jpg`, added 2026-07-28)** — a ringed planet over mountains,
   supplied by the user, exported 1400x788 / q80 (130KB). Sampled the same way as the avatar and it
   needed **no accent changes at all**: 58.9% of its chromatic pixels fall in H240–269 against

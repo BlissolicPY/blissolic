@@ -541,6 +541,34 @@ body {
 
 .tile:hover .tile__sub { color: var(--text-dim); }
 
+/* live follower/member count, right-aligned before the arrow */
+.tile__count {
+  flex: none;
+  margin-right: 0.15rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+  transition: color 0.45s var(--ease), opacity 0.4s var(--ease);
+}
+
+.tile:hover .tile__count { color: var(--lilac-200); }
+
+/* placeholder before the first fetch lands — dim, so it never looks broken */
+.tile__count[data-state="loading"] { opacity: 0.35; }
+
+/* a source that dies just leaves the tile clean rather than showing a lie */
+.tile__count[data-state="dead"] { display: none; }
+
+.tile__count.is-bump { animation: count-bump 0.6s var(--ease); }
+
+@keyframes count-bump {
+  0%   { transform: translateY(0); text-shadow: none; }
+  35%  { transform: translateY(-2px); text-shadow: 0 0 12px rgba(214, 152, 225, 0.8); }
+  100% { transform: translateY(0); text-shadow: none; }
+}
+
 .tile__arrow {
   flex: none;
   display: grid;
@@ -573,6 +601,38 @@ body {
 .tile.is-copied .ico-copy  { opacity: 0; transform: scale(0.5); }
 .tile.is-copied .ico-check { opacity: 1; transform: scale(1); }
 .tile.is-copied .tile__arrow { color: var(--lilac-200); }
+
+/* ==========================================================================
+   Cursor trail — a lagging, speed-stretched glow behind the real pointer.
+   The native cursor stays visible on purpose; see cursor.js.
+   ========================================================================== */
+
+.cursor-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  pointer-events: none;   /* must never eat a click */
+  opacity: 0;
+  will-change: transform, opacity;
+  background: radial-gradient(
+    circle,
+    rgba(214, 152, 225, 0.55) 0%,
+    rgba(168, 136, 221, 0.28) 45%,
+    rgba(219, 166, 183, 0) 72%
+  );
+  filter: blur(6px);
+  mix-blend-mode: screen; /* lifts off the dark page instead of greying it */
+}
+
+/* touch devices and reduced-motion never get the element at all, but belt and
+   braces in case the script runs before the query settles */
+@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .cursor-glow { display: none; }
+}
 
 /* ==========================================================================
    Footer + toast
