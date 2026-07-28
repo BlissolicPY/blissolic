@@ -1,26 +1,45 @@
 /* ==========================================================================
-   blissolic.com
-   Palette sampled directly from the channel avatar (dusk plums + the rose
-   rim light bleeding in from the background bokeh).
+   blissolic.com — noir
+   Palette sampled from the new pair: assets/pfp.gif (Batman on a rooftop) and
+   assets/bg.jpg (a ringed planet over mountains).
+
+   Both are essentially colourless and that is the whole design. The background
+   has literally ZERO chromatic pixels — a pure greyscale ramp from #070707 to
+   #F6F6F6. The avatar is 93% achromatic too, and every chromatic pixel it does
+   have sits in one 10-degree bin, H190-199: the cold halo around the moon.
+
+   So the page is built from greys, with exactly two accents, both lifted from
+   the avatar: bone-cream moonlight and that cold teal. Saturation anywhere else
+   would be invented, and against a greyscale photograph it would look it.
    ========================================================================== */
 
 :root {
-  /* sampled from assets/pfp.jpg — % is that bucket's share of the circle */
-  --void-950:  #150C16; /* 0.36% — darkest well-represented colour */
-  --void-900:  #1D1929; /* 0.43% */
-  --dusk-800:  #262838; /* 2.35% */
-  --plum-700:  #593C67; /* 4.27% */
-  --plum-600:  #654A6B; /* 16.24% — the single most common bucket */
-  --plum-500:  #765877; /* 9.17% */
-  --mauve-400: #866885; /* 3.40% */
-  --lilac-300: #A888DD; /* 1.66% — the brightest thing with real presence */
-  --lilac-200: #D698E1; /* 1.33% */
-  --rose-300:  #DBA6B7; /* 1.15% — the rose rim light */
-  --white:     #FBFCFB;
+  /* % is that bucket's share of the sampled circle */
+  --void-950: #070707; /* 47.48% of the background — the floor */
+  --ink-900:  #131313; /* 74.22% of the avatar — its black */
+  --ink-800:  #161616; /* 26.40% of the background */
+  --ash-700:  #262626; /* 11.91% */
+  --ash-600:  #363636; /* 5.52% */
+  --ash-500:  #565656; /* 1.91% */
+  --steel-400:#767676; /* 0.75% */
+  --steel-300:#979797; /* 0.34% */
+
+  /* the moon's cold halo — the avatar's only chroma, all of it in H190-199 */
+  --teal-800: #112732; /* 1.98% — S49 L13 */
+  --teal-700: #143641; /* 1.43% — S53 L17 */
+  --teal-600: #1C404A; /* 0.60% */
+  --teal-500: #2E4D56; /* 0.57% — the lightest, so it carries the halo */
+
+  /* moonlight itself */
+  --bone-300: #8F8475; /* 4.95% */
+  --bone-200: #A08F7A; /* 3.76% */
+  --bone-100: #A7977F; /* 1.35% — the brightest moon, the primary accent */
+  --moon-100: #E6E6E6; /* the highlight end of the greyscale ramp */
+  --white:    #F6F6F6;
 
   --text:       var(--white);
-  --text-dim:   rgba(251, 252, 251, 0.58);
-  --text-faint: rgba(251, 252, 251, 0.34);
+  --text-dim:   rgba(246, 246, 246, 0.58);
+  --text-faint: rgba(246, 246, 246, 0.34);
 
   /* lifted from 0.035 / 0.08 once the photograph went in behind them — tiles
      need more separation over an image than over a flat ambient */
@@ -29,7 +48,7 @@
   --tile-border:    rgba(255, 255, 255, 0.10);
 
   /* per-tile brand accent, overridden by [data-brand] */
-  --brand: var(--lilac-300);
+  --brand: var(--bone-300);
 
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
@@ -53,10 +72,10 @@ body {
   overflow-x: hidden;
 }
 
-::selection { background: var(--lilac-300); color: var(--void-950); }
+::selection { background: var(--bone-300); color: var(--void-950); }
 
 :focus-visible {
-  outline: 2px solid var(--rose-300);
+  outline: 2px solid var(--moon-100);
   outline-offset: 3px;
   border-radius: 4px;
 }
@@ -73,21 +92,21 @@ body {
   background: var(--void-950);
 }
 
-/* The photograph — a ringed planet over mountains, supplied by the user.
-   Sampled the same way as the avatar and it needed no accent changes at all:
-   58.9% of its chromatic pixels sit in H240-269 against --lilac-300 at H264,
-   and its H320-339 magenta band is exactly where --rose-300 already lived.
-   Brightness carries the darkening; saturation comes down a little so the
-   violets stop competing with the lilac accents; blur calms the star field so
-   it isn't sparkling behind body text. */
+/* The moon over water — and it is a two-value image, not a photograph:
+   59.45% pure #000000 and 37.02% near-white #FAFAFA, with everything else
+   under 1%. There is no midtone to work with at all.
+
+   That makes it the most aggressive background of any site in this family. At
+   full strength the moon is 37% of the frame at L98 and white text on it is
+   simply unreadable, so brightness comes right down to bring the moon to a mid
+   grey — which incidentally turns it into a halo behind the avatar, which is
+   the best thing this image does. No saturate(): there is nothing to
+   desaturate, and it would only tint the JPEG's own noise. */
 .photo {
   position: absolute;
   inset: -2%;
-  background: url("assets/bg.jpg") center 40% / cover no-repeat;
-  /* brighter than the Mango site's 0.66 because this image is the opposite
-     problem: a huge unlit planet disk fills the middle of the crop, so the same
-     darkening measured 12 points below the page's own baseline */
-  filter: saturate(0.9) brightness(0.92) blur(2px);
+  background: url("assets/bg.jpg") center 42% / cover no-repeat;
+  filter: brightness(0.42) blur(2px);
 }
 
 /* Vertical, and sized in rem rather than %. The card is 27.5rem at every
@@ -100,14 +119,14 @@ body {
   inset: 0;
   background:
     radial-gradient(ellipse 30rem 26rem at 50% 76%,
-      rgba(9, 5, 12, 0.82) 0%,
-      rgba(9, 5, 12, 0.5) 60%,
-      rgba(9, 5, 12, 0) 100%),
+      rgba(4, 4, 4, 0.82) 0%,
+      rgba(4, 4, 4, 0.5) 60%,
+      rgba(4, 4, 4, 0) 100%),
     linear-gradient(to bottom,
-      rgba(9, 5, 12, 0.24) 0%,
-      rgba(9, 5, 12, 0.36) 26%,
-      rgba(9, 5, 12, 0.72) 62%,
-      rgba(9, 5, 12, 0.86) 100%);
+      rgba(4, 4, 4, 0.24) 0%,
+      rgba(4, 4, 4, 0.36) 26%,
+      rgba(4, 4, 4, 0.72) 62%,
+      rgba(4, 4, 4, 0.86) 100%);
 }
 
 .aurora {
@@ -117,28 +136,22 @@ body {
   will-change: transform;
 }
 
-/* The ambient light is plum, not lilac. This avatar has no saturated mid-tone —
-   its chroma lives entirely in the highlights (the lilacs sit at 70% lightness),
-   so washing the page in those at 0.5 alpha floods it to a flat mid-purple and
-   leaves the accents nothing to pop against. The plums carry the ambient; the
-   lilacs stay reserved for the small bright elements below. */
-/* The photograph is the ambient now, so these are barely-there: they exist to
-   keep some drift alive behind a still image and to bleed colour into the dark
-   corners. aurora--2 was dropped entirely — it was doing the same job as the
-   photo's own violet and only muddied it. */
+/* The photograph is the ambient; these only keep some drift alive behind a
+   still image. Both are the avatar's moon-halo teal, and both are weak — on a
+   greyscale page the eye finds any colour instantly, so a little goes further
+   here than it did on the colour sites. */
 .aurora--1 {
   width: 58rem; height: 58rem;
   top: -24rem; left: -16rem;
-  background: radial-gradient(circle, rgba(103, 70, 151, 0.22) 0%, transparent 68%);
+  background: radial-gradient(circle, rgba(28, 64, 74, 0.32) 0%, transparent 68%);
   animation: drift-1 26s var(--ease-soft) infinite alternate;
 }
 
-/* the rose still earns its place: the photo carries the same magenta band
-   (H320-339) that the avatar's rim light did */
+/* the cold halo, kept as the one spot of colour on the whole page */
 .aurora--3 {
   width: 38rem; height: 38rem;
   top: 30%; right: -16rem;
-  background: radial-gradient(circle, rgba(230, 136, 197, 0.12) 0%, transparent 66%);
+  background: radial-gradient(circle, rgba(46, 77, 86, 0.26) 0%, transparent 66%);
   animation: drift-3 38s var(--ease-soft) infinite alternate;
 }
 
@@ -191,7 +204,7 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(125% 95% at 50% 50%, transparent 42%, rgba(10, 5, 11, 0.6) 100%);
+  background: radial-gradient(125% 95% at 50% 50%, transparent 42%, rgba(4, 4, 4, 0.6) 100%);
 }
 
 /* ==========================================================================
@@ -246,7 +259,7 @@ body {
   position: absolute;
   inset: -18%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(134, 104, 133, 0.5) 0%, transparent 68%);
+  background: radial-gradient(circle, rgba(46, 77, 86, 0.5) 0%, transparent 68%);
   filter: blur(20px);
   animation: breathe 5.5s var(--ease-soft) infinite alternate;
 }
@@ -265,9 +278,9 @@ body {
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
-    var(--lilac-300) 70deg,
-    var(--lilac-200) 120deg,
-    var(--rose-300) 190deg,
+    var(--bone-300) 70deg,
+    var(--bone-200) 120deg,
+    var(--moon-100) 190deg,
     transparent 250deg,
     transparent 360deg
   );
@@ -286,7 +299,7 @@ body {
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(21, 12, 22, 0.9);
+  border: 2px solid rgba(7, 7, 7, 0.9);
   box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.85);
   transition: transform 0.5s var(--ease);
   user-select: none;
@@ -312,7 +325,7 @@ body {
   letter-spacing: 0.42em;
   text-indent: 0.42em;
   margin-top: 0.5rem;
-  color: var(--lilac-300);
+  color: var(--bone-300);
   opacity: 0.85;
 }
 
@@ -334,8 +347,8 @@ body {
   border-radius: 999px;
   text-decoration: none;
   color: var(--text);
-  background: rgba(168, 136, 221, 0.1);
-  border: 1px solid rgba(168, 136, 221, 0.26);
+  background: rgba(160, 143, 122, 0.1);
+  border: 1px solid rgba(160, 143, 122, 0.26);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   transition: background 0.4s var(--ease), border-color 0.4s var(--ease),
@@ -343,26 +356,26 @@ body {
 }
 
 .subs:hover {
-  background: rgba(168, 136, 221, 0.18);
-  border-color: rgba(214, 152, 225, 0.5);
+  background: rgba(160, 143, 122, 0.18);
+  border-color: rgba(167, 151, 127, 0.5);
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px -12px rgba(168, 136, 221, 0.7);
+  box-shadow: 0 10px 30px -12px rgba(160, 143, 122, 0.7);
 }
 
 .subs__dot {
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 50%;
-  background: var(--lilac-200);
-  box-shadow: 0 0 0 0 rgba(214, 152, 225, 0.7);
+  background: var(--bone-200);
+  box-shadow: 0 0 0 0 rgba(167, 151, 127, 0.7);
   animation: pulse 2.4s var(--ease-soft) infinite;
   flex: none;
 }
 
 @keyframes pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(214, 152, 225, 0.55); }
-  70%  { box-shadow: 0 0 0 0.5rem rgba(214, 152, 225, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(214, 152, 225, 0); }
+  0%   { box-shadow: 0 0 0 0 rgba(167, 151, 127, 0.55); }
+  70%  { box-shadow: 0 0 0 0.5rem rgba(167, 151, 127, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(167, 151, 127, 0); }
 }
 
 .subs__count {
@@ -370,7 +383,7 @@ body {
   font-weight: 600;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
-  color: var(--lilac-200);
+  color: var(--bone-200);
   transition: opacity 0.3s var(--ease);
   /* the count-up passes through wider strings than it lands on
      ("1.23K" -> "25.7K"); reserve the widest so the pill can't resize */
@@ -385,7 +398,7 @@ body {
 
 @keyframes bump {
   0%   { transform: translateY(0); text-shadow: none; }
-  35%  { transform: translateY(-3px); text-shadow: 0 0 14px rgba(214, 152, 225, 0.85); }
+  35%  { transform: translateY(-3px); text-shadow: 0 0 14px rgba(167, 151, 127, 0.85); }
   100% { transform: translateY(0); text-shadow: none; }
 }
 
@@ -412,7 +425,7 @@ body {
    up, and with the rose already in the palette */
 .tile[data-brand="tiktok"]  { --brand: #25F4EE; }
 .tile[data-brand="x"]       { --brand: #FFFFFF; }
-.tile[data-brand="mail"]    { --brand: var(--lilac-200); }
+.tile[data-brand="mail"]    { --brand: var(--bone-200); }
 
 .tile {
   position: relative;
@@ -553,7 +566,7 @@ body {
   transition: color 0.45s var(--ease), opacity 0.4s var(--ease);
 }
 
-.tile:hover .tile__count { color: var(--lilac-200); }
+.tile:hover .tile__count { color: var(--bone-200); }
 
 /* placeholder before the first fetch lands — dim, so it never looks broken */
 .tile__count[data-state="loading"] { opacity: 0.35; }
@@ -565,7 +578,7 @@ body {
 
 @keyframes count-bump {
   0%   { transform: translateY(0); text-shadow: none; }
-  35%  { transform: translateY(-2px); text-shadow: 0 0 12px rgba(214, 152, 225, 0.8); }
+  35%  { transform: translateY(-2px); text-shadow: 0 0 12px rgba(167, 151, 127, 0.8); }
   100% { transform: translateY(0); text-shadow: none; }
 }
 
@@ -593,14 +606,14 @@ body {
   margin: auto;
   opacity: 0;
   transform: scale(0.5);
-  color: var(--lilac-200);
+  color: var(--bone-200);
 }
 
 .tile[data-brand="mail"]:hover .tile__arrow { transform: none; }
 
 .tile.is-copied .ico-copy  { opacity: 0; transform: scale(0.5); }
 .tile.is-copied .ico-check { opacity: 1; transform: scale(1); }
-.tile.is-copied .tile__arrow { color: var(--lilac-200); }
+.tile.is-copied .tile__arrow { color: var(--bone-200); }
 
 /* ==========================================================================
    Cursor trail — a lagging, speed-stretched glow behind the real pointer.
@@ -620,9 +633,9 @@ body {
   will-change: transform, opacity;
   background: radial-gradient(
     circle,
-    rgba(214, 152, 225, 0.55) 0%,
-    rgba(168, 136, 221, 0.28) 45%,
-    rgba(219, 166, 183, 0) 72%
+    rgba(167, 151, 127, 0.55) 0%,
+    rgba(160, 143, 122, 0.28) 45%,
+    rgba(230, 230, 230, 0) 72%
   );
   filter: blur(6px);
   mix-blend-mode: screen; /* lifts off the dark page instead of greying it */
@@ -632,6 +645,553 @@ body {
    braces in case the script runs before the query settles */
 @media (pointer: coarse), (prefers-reduced-motion: reduce) {
   .cursor-glow { display: none; }
+}
+
+/* ==========================================================================
+   Now playing — drives a hidden YouTube IFrame player
+   ========================================================================== */
+
+/* the real player: offscreen at full size rather than display:none or 0x0,
+   which some browsers treat as a reason not to start playback */
+.yt-host {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 320px;
+  height: 180px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.player {
+  width: 100%;
+  margin-top: 0.9rem;
+  padding: 0.85rem 1rem 0.75rem;
+  border-radius: 1rem;
+  background: var(--tile-bg);
+  border: 1px solid var(--tile-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: border-color 0.45s var(--ease), background 0.45s var(--ease);
+}
+
+.player:hover { border-color: rgba(167, 151, 127, 0.28); }
+
+/* set by player.js when the API is blocked or the video isn't embeddable */
+.player[hidden] { display: none; }
+
+.player__top {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.player__art {
+  flex: none;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.7rem;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.9);
+}
+
+.player__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  transition: transform 0.6s var(--ease), filter 0.6s var(--ease);
+  filter: saturate(0.9) brightness(0.92);
+}
+
+/* the art only comes fully alive while it's actually playing */
+.player[data-playing="true"] .player__art img {
+  transform: scale(1.06);
+  filter: saturate(1) brightness(1);
+}
+
+.player__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.player__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.player__title {
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.4s var(--ease);
+}
+
+.player__title:hover { color: var(--bone-100); }
+
+/* three bars that only move while the track is running */
+.player__eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 0.55rem;
+}
+
+.player__eq i {
+  width: 2px;
+  height: 30%;
+  border-radius: 1px;
+  background: var(--bone-100);
+  animation: eq 0.9s var(--ease-soft) infinite alternate;
+  opacity: 0.35;
+}
+
+.player__eq i:nth-child(2) { animation-delay: 0.28s; }
+.player__eq i:nth-child(3) { animation-delay: 0.55s; }
+
+.player[data-playing="true"] .player__eq i { opacity: 1; }
+.player[data-playing="false"] .player__eq i { animation-play-state: paused; }
+
+
+@keyframes eq {
+  from { height: 25%; }
+  to   { height: 100%; }
+}
+
+.player__btn {
+  flex: none;
+  width: 2.3rem;
+  height: 2.3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--bone-100);
+  background: rgba(167, 151, 127, 0.13);
+  border: 1px solid rgba(167, 151, 127, 0.3);
+  transition: background 0.4s var(--ease), border-color 0.4s var(--ease),
+              transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+
+.player__btn:hover {
+  background: rgba(167, 151, 127, 0.22);
+  border-color: rgba(230, 230, 230, 0.55);
+  transform: scale(1.06);
+  box-shadow: 0 8px 22px -10px rgba(167, 151, 127, 0.8);
+}
+
+.player__btn:active { transform: scale(0.97); }
+
+.player__btn svg { width: 0.95rem; height: 0.95rem; fill: currentColor; display: block; }
+
+.player[data-playing="false"] .ico-pause,
+.player[data-playing="true"]  .ico-play { display: none; }
+
+/* --- seek --- */
+
+/* padded wrapper so the 4px bar has a comfortable grab area */
+.player__seekwrap {
+  margin-top: 0.7rem;
+  padding: 0.45rem 0;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.player__seekwrap:focus-visible { outline-offset: 6px; }
+
+.player__track {
+  position: relative;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.13);
+  overflow: visible;
+}
+
+.player__fill {
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--teal-500), var(--bone-100));
+  box-shadow: 0 0 12px -2px rgba(167, 151, 127, 0.65);
+}
+
+.player__knob {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--bone-100);
+  box-shadow: 0 0 10px rgba(167, 151, 127, 0.75);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+}
+
+.player:hover .player__knob,
+.player__seekwrap:focus-visible .player__knob { opacity: 1; }
+
+/* --- foot: time + volume --- */
+
+.player__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.player__time {
+  font-size: 0.7rem;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+
+.player__sep { margin: 0 0.3rem; opacity: 0.55; }
+
+.player__vol {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.player__mute {
+  display: grid;
+  place-items: center;
+  padding: 0.15rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--text-faint);
+  transition: color 0.4s var(--ease);
+}
+
+.player__mute:hover { color: var(--bone-100); }
+.player__mute svg { width: 0.95rem; height: 0.95rem; display: block; }
+
+.player[data-muted="false"] .ico-muted,
+.player[data-muted="true"]  .ico-vol { display: none; }
+.player[data-muted="true"] .player__mute { color: var(--mauve-400); }
+
+.player__slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 5.5rem;
+  height: 3px;
+  border-radius: 999px;
+  cursor: pointer;
+  /* --vol is kept in sync by player.js so the filled part tracks the thumb */
+  background: linear-gradient(
+    to right,
+    var(--bone-100) calc(var(--vol, 28) * 1%),
+    rgba(255, 255, 255, 0.14) calc(var(--vol, 28) * 1%)
+  );
+}
+
+.player__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--bone-100);
+  box-shadow: 0 0 0 3px rgba(167, 151, 127, 0.16);
+  transition: box-shadow 0.3s var(--ease);
+}
+
+.player__slider:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(167, 151, 127, 0.22); }
+
+.player__slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bone-100);
+  box-shadow: 0 0 0 3px rgba(167, 151, 127, 0.16);
+}
+
+/* On anything wide enough, the player leaves the column and parks in the
+   top-left corner of the viewport. Two reasons: it stops pushing the tiles down
+   past the fold, and a persistent transport control belongs at a screen edge
+   rather than buried under the links. Below 64rem it drops back into the flow,
+   because a fixed panel would cover the hero on a phone.
+
+   This block has to sit AFTER the base `.player` rule, not before it: same
+   specificity means source order decides, and in front of it the base
+   `width: 100%` won and the panel spanned the whole viewport. */
+@media (min-width: 64rem) {
+  .player {
+    position: fixed;
+    top: 1.15rem;
+    left: 1.15rem;
+    z-index: 20;
+    width: 19.5rem;
+    margin-top: 0;
+  }
+}
+
+/* ==========================================================================
+   Intro gate — the one click browsers insist on, turned into the entrance.
+
+   Every visitor gets it, because that click is the only thing that guarantees
+   audible playback: after a real gesture no browser can refuse. It also holds
+   the staggered reveal below, so the page plays its entrance AS the overlay
+   dissolves rather than having quietly finished behind it.
+   ========================================================================== */
+
+/* the reveal is paused, not delayed — pausing stops the delay clock too, so
+   removing .gated replays the whole stagger from the top */
+html.gated [data-reveal] { animation-play-state: paused; }
+html.gated body { overflow: hidden; }
+
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background:
+    radial-gradient(70% 55% at 50% 45%, rgba(28, 64, 74, 0.22) 0%, transparent 70%),
+    rgba(4, 4, 4, 0.82);
+  backdrop-filter: blur(14px) saturate(0.9);
+  -webkit-backdrop-filter: blur(14px) saturate(0.9);
+  animation: gate-in 0.55s var(--ease) both;
+}
+
+.gate[hidden] { display: none; }
+
+/* set by player.js just before removal, so it dissolves instead of vanishing */
+.gate.is-leaving {
+  animation: gate-out 0.6s var(--ease) forwards;
+  pointer-events: none;
+}
+
+@keyframes gate-in {
+  from { opacity: 0; backdrop-filter: blur(0); }
+  to   { opacity: 1; }
+}
+
+@keyframes gate-out {
+  to { opacity: 0; transform: scale(1.02); }
+}
+
+.gate__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 1.5rem;
+  animation: gate-rise 0.7s var(--ease) 0.08s both;
+}
+
+@keyframes gate-rise {
+  from { opacity: 0; transform: translateY(12px); filter: blur(5px); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
+
+.gate__art {
+  position: relative;
+  width: 5.4rem;
+  height: 5.4rem;
+  display: grid;
+  place-items: center;
+}
+
+.gate__art img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(7, 7, 7, 0.9);
+  box-shadow: 0 14px 40px -12px rgba(0, 0, 0, 0.9);
+  user-select: none;
+}
+
+/* one slow pulse ring — reads as "waiting for you" without being a button */
+.gate__ring {
+  position: absolute;
+  inset: -6%;
+  border-radius: 50%;
+  border: 1px solid rgba(167, 151, 127, 0.5);
+  animation: gate-pulse 2.6s var(--ease-soft) infinite;
+}
+
+@keyframes gate-pulse {
+  0%   { transform: scale(0.96); opacity: 0.9; }
+  70%  { transform: scale(1.22); opacity: 0; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
+
+.gate__eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 0.85rem;
+  margin-top: 1.15rem;
+}
+
+.gate__eq i {
+  width: 2px;
+  height: 30%;
+  border-radius: 1px;
+  background: var(--bone-100);
+  animation: eq 0.85s var(--ease-soft) infinite alternate;
+}
+
+.gate__eq i:nth-child(2) { animation-delay: 0.16s; }
+.gate__eq i:nth-child(3) { animation-delay: 0.33s; }
+.gate__eq i:nth-child(4) { animation-delay: 0.5s; }
+.gate__eq i:nth-child(5) { animation-delay: 0.67s; }
+
+.gate__title {
+  margin-top: 0.8rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  background: linear-gradient(175deg, var(--white) 30%, var(--bone-100) 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+
+.gate__hint {
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 300;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  animation: gate-breathe 2.8s var(--ease-soft) infinite alternate;
+}
+
+@keyframes gate-breathe {
+  from { opacity: 0.45; }
+  to   { opacity: 0.95; }
+}
+
+/* ==========================================================================
+   Bats — the swarm that crosses as the gate clears, and the few that keep
+   drifting down afterwards. See bats.js.
+
+   The swarm sits above the gate (z 70) so it stays crisp while the overlay is
+   still fading. The drift sits at z 1, BELOW the card's z 2, so nothing ever
+   crosses the text and the tiles' backdrop-filter blurs a bat as it passes
+   behind the glass.
+   ========================================================================== */
+
+.bat,
+.bat-fall {
+  position: fixed;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.bat {
+  top: var(--top);
+  left: -16vw;
+  z-index: 70;
+  animation: bat-cross var(--dur) linear var(--delay) both;
+}
+
+.bat-fall {
+  top: -14vh;
+  left: var(--left);
+  z-index: 1;
+  animation: bat-fall var(--dur) linear var(--delay) both;
+}
+
+/* the bob is a separate element so it composes with the travel instead of
+   fighting it for the transform channel */
+.bat i,
+.bat-fall i {
+  display: block;
+  will-change: transform;
+  animation: bat-bob var(--bobDur) ease-in-out infinite alternate;
+}
+
+.bat svg,
+.bat-fall svg {
+  display: block;
+  width: var(--size);
+  height: calc(var(--size) / 2);
+  color: var(--tint);
+  /* a bat is a silhouette — it reads by being darker than what's behind it.
+     The moon-bone rim is what stops it vanishing into an equally black sky. */
+  /* two shadows doing opposite jobs, because this background is two-valued:
+     a dark one so a moonlit bat separates when it crosses the moon, and a bone
+     glow so it still reads over the 59% of the frame that is pure black */
+  filter:
+    blur(var(--blur))
+    drop-shadow(0 0 5px rgba(167, 151, 127, 0.45))
+    drop-shadow(0 3px 8px rgba(0, 0, 0, 0.9));
+}
+
+/* Wings scale independently around the body's centre line, which is what makes
+   this read as flight rather than a shape wobbling. */
+.bat__wing {
+  transform-origin: 50% 50%;
+  animation: bat-flap var(--flap) ease-in-out infinite alternate;
+}
+
+.bat__wing--l { transform-origin: 100% 50%; }
+.bat__wing--r { transform-origin: 0% 50%; }
+
+@keyframes bat-flap {
+  from { transform: scaleY(1)   scaleX(1); }
+  to   { transform: scaleY(0.28) scaleX(0.88); }
+}
+
+@keyframes bat-bob {
+  from { transform: translateY(calc(var(--bob) * -1)) rotate(-7deg); }
+  to   { transform: translateY(var(--bob)) rotate(7deg); }
+}
+
+/* linear on purpose — an eased sweep reads as a swipe, and a bat crossing a
+   courtyard does not slow down in the middle of it */
+@keyframes bat-cross {
+  from { transform: translate3d(0, 0, 0); opacity: 0; }
+  9%   { opacity: var(--op); }
+  84%  { opacity: var(--op); }
+  to   { transform: translate3d(132vw, var(--drift), 0); opacity: 0; }
+}
+
+/* --y0 lets one begin part-way down the screen while still playing from 0%, so
+   it fades in wherever it starts. A negative animation-delay would skip the
+   fade entirely and the whole first batch would pop in at once. */
+@keyframes bat-fall {
+  from { transform: translate3d(0, var(--y0, 0vh), 0); opacity: 0; }
+  14%  { opacity: var(--op); }
+  86%  { opacity: var(--op); }
+  to   { transform: translate3d(var(--drift), 126vh, 0); opacity: 0; }
+}
+
+/* the card has to own a stacking position for the drift to sit behind it */
+.card {
+  position: relative;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bat,
+  .bat-fall { display: none; }
 }
 
 /* ==========================================================================
@@ -657,8 +1217,8 @@ body {
   font-size: 0.84rem;
   font-weight: 400;
   color: var(--white);
-  background: rgba(29, 25, 41, 0.9);
-  border: 1px solid rgba(214, 152, 225, 0.35);
+  background: rgba(19, 19, 19, 0.9);
+  border: 1px solid rgba(167, 151, 127, 0.35);
   box-shadow: 0 12px 34px -12px rgba(0, 0, 0, 0.9);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);

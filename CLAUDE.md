@@ -30,6 +30,39 @@ Next concrete step: deploy to blissolic.com. Nothing else outstanding.
 - `style.css` — palette custom properties.
 - `assets/pfp.jpg` — the 900x900 avatar the palette was derived from.
 
+## The noir rebuild (2026-07-29)
+
+Re-themed around bats at the user's request. New avatar (`assets/pfp.gif`, animated — Batman on a
+rooftop), new background (`assets/bg.jpg`, a moon over stylised water), a local music track, an
+intro gate, and bats replacing the sibling sites' leaves/warp.
+
+- **The palette is greyscale because the sources are.** The background has **zero** chromatic
+  pixels — 59.45% pure `#000000` and 37.02% near-white `#FAFAFA`, with nothing else above 1%. The
+  avatar is 93% achromatic, and every chromatic pixel it has sits in one 10-degree bin, H190-199:
+  the cold halo round the moon. So: greys, plus exactly two sampled accents — bone-cream moonlight
+  (`#A7977F`) and that teal. Any other colour would be invented and would look it.
+
+- **`brightness(0.42)` on the background, the most aggressive of any site here.** With 37% of the
+  frame at L98, white text over the moon is unreadable at anything near full strength. Dimming it
+  to a mid grey also turns the moon into a halo behind the avatar, which is the best thing the
+  image does. No `saturate()` — there is nothing to desaturate and it would only tint JPEG noise.
+  Measured: mean luma 15.2 (the family runs 33–40) and centre-to-corner range 31.8 (the highest of
+  the five). Both are properties of a 59%-black source, not faults.
+
+- **The bats are moonlit, not black.** First attempt painted them in the page's blacks on the logic
+  that a bat is a silhouette — and they vanished, because a silhouette only reads against a *lit*
+  sky and this page is mostly pure black. They are greys and bone now, with two drop-shadows doing
+  opposite jobs: a dark one so they separate when crossing the moon, a bone glow so they read over
+  the black. Wings are separate paths scaled independently around the body, which is what makes it
+  read as flight rather than a shape wobbling.
+
+- **The player drives a LOCAL file, not a YouTube iframe** — unlike every sibling site. The track
+  is Senkhi's own (`assets/notorious.mp3`, 1:57), so there is no embed policy to fight, no API for
+  an adblocker to kill, and real control over the element; `player.js` is about half the size of
+  the YouTube version as a result. `preload="none"` keeps 1.8MB off the wire until someone enters.
+  Volume still uses the perceptual curve (`pos^2.2`), because `audio.volume` is linear amplitude
+  exactly like YouTube's was.
+
 ## Decisions & Rationale
 
 - **Per-tile follower counts (added 2026-07-28).** YouTube 25.6K, Discord members, TikTok and X
