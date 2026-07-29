@@ -72,9 +72,15 @@ Files touched: `CLAUDE.md` and `.claude/memory/` only.
 
 Next concrete steps, in order:
 1. Add the `www` CNAME at Porkbun (host `www` → `blissolicpy.github.io`). Not on the root — Porkbun
-   rejects that, correctly.
-2. The `blissolic.com` header comments in `main.js`, `player.js`, `style.css` are stale — the domain
+   rejects that, correctly. The bare domain works either way; this only adds `www.`.
+2. Repost the link in Discord with a query string (`https://blissolic.xyz/?1`) to confirm the new
+   preview — Discord caches embeds per URL, so an already-posted link keeps the old thumbnail.
+3. The `blissolic.com` header comments in `main.js`, `player.js`, `style.css` are stale — the domain
    is `.xyz` now. (`bats.js` and `quality.js` say `.xyz`.)
+4. Open question worth a decision: the music default is now 15% off the *control* (28 → 24, about
+   3 dB). If it should be 15% quieter in amplitude instead, the value is 26.
+5. Nothing else is outstanding. Both sites are live, measured, and match on every shared decision
+   except the effects each one actually has (bats vs leaves, email tile, one-screen layout).
 
 Earlier: 2026-07-14 built from scratch as a port of `../Jona Website`; 2026-07-28 per-tile counts +
 cursor trail + background photo; 2026-07-29 the noir rebuild and the page-view counter.
@@ -194,6 +200,9 @@ for the effects it owns; `bats.js` reads it for how many bats to spawn.
   getting this wrong turned the big foreground bats into glowing clouds on the first attempt).
 - `assets/bg-baked.jpg` — the background with its filters already applied. `assets/bg.jpg` is the
   source; nothing loads it.
+- `assets/og.jpg` — the link-preview thumbnail: frame one of `pfp.gif`, padded square. Regenerate it
+  if the avatar changes, or every Discord/Twitter preview keeps showing the old one.
+- `assets/notorious.mp3` — the track. `?v=` on its `<audio src>` must be bumped when it is replaced.
 - `index.html` — the whole page; `og:image` absolute (YouTube CDN) and **no** `og:url`, both
   inherited from the Jona site on purpose (see Decisions).
 - `main.js` — live sub-count fetch + `abbreviate()`.
