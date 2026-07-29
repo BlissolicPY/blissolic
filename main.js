@@ -107,6 +107,66 @@
     return n < 10_000 ? n.toLocaleString("en-GB") : abbreviate(n);
   }
 
+  /* ---------- page views ----------
+     A static page can't count anything itself, so this leans on a keyless
+     public counter. Both services below are CORS-open; abacus goes first only
+     because its payload is a bare {value}.
+
+     The hit fires once per browser SESSION, not per load, so hammering F5
+     doesn't inflate it — every later load just reads. The counter is public and
+     anyone who finds the URL could bump it; that's the price of having no
+     backend, and it's a vanity number, not analytics. */
+  const VIEW_NS = "blissolic-links";
+  const VIEW_KEY = "views";
+
+  const VIEW_SOURCES = [
+    {
+      hit: `https://abacus.jasoncameron.dev/hit/${VIEW_NS}/${VIEW_KEY}`,
+      get: `https://abacus.jasoncameron.dev/get/${VIEW_NS}/${VIEW_KEY}`,
+      read: (d) => d?.value,
+    },
+    {
+      hit: `https://api.counterapi.dev/v1/${VIEW_NS}/${VIEW_KEY}/up`,
+      get: `https://api.counterapi.dev/v1/${VIEW_NS}/${VIEW_KEY}/`,
+      read: (d) => d?.count,
+    },
+  ];
+
+  async function showViews() {
+    const el = document.getElementById("viewCount");
+    const numEl = document.getElementById("viewNum");
+    if (!el || !numEl) return;
+
+    let counted = false;
+    try {
+      counted = sessionStorage.getItem("bl:counted") === "1";
+    } catch {
+      /* private mode — it just counts again, which is harmless */
+    }
+
+    for (const src of VIEW_SOURCES) {
+      try {
+        const res = await fetch(counted ? src.get : src.hit, { cache: "no-store" });
+        if (!res.ok) continue;
+        const n = Number(src.read(await res.json()));
+        if (!Number.isFinite(n) || n <= 0) continue;
+
+        numEl.textContent = formatCount(n);
+        el.dataset.state = "live";
+        el.setAttribute("aria-label", `${formatCount(n)} page ${n === 1 ? "view" : "views"}`);
+        try {
+          sessionStorage.setItem("bl:counted", "1");
+        } catch {
+          /* nothing to remember it with */
+        }
+        return;
+      } catch {
+        /* try the next service */
+      }
+    }
+    el.dataset.state = "dead";
+  }
+
   const countEl = document.getElementById("subCount");
   const toastEl = document.getElementById("toast");
   const mailEl = document.getElementById("mailTile");
@@ -308,4 +368,5 @@
   });
 
   refresh(true).then(startPolling);
+  showViews();
 })();

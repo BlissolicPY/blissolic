@@ -338,8 +338,60 @@ body {
 
 /* --- live subscriber pill --- */
 
-.subs {
+/* the sub pill and the view count sit as a matched pair.
+   width:100% is load-bearing — on the sibling site shrink-to-fit sized this box
+   one pixel under its contents and the view pill wrapped to a second line. */
+.stats {
+  width: 100%;
   margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Deliberately quieter than the sub pill beside it: no border, no dot, no
+   backdrop blur. Two pills of equal weight compete, and the subscriber count is
+   the one that matters — this is a footnote that happens to live up here. */
+.views {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-dim);
+  transition: background 0.4s var(--ease), color 0.4s var(--ease);
+}
+
+.views:hover {
+  background: rgba(167, 151, 127, 0.16);
+  color: var(--bone-100);
+}
+
+.views__icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: none;
+  display: block;
+}
+
+.views__n {
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  transition: opacity 0.4s var(--ease);
+}
+
+.views[data-state="loading"] .views__n { opacity: 0.4; }
+
+/* both counter services down — take the whole pill away rather than leaving an
+   eye staring at an em dash */
+.views[data-state="dead"] { display: none; }
+
+.subs {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
