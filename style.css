@@ -107,12 +107,26 @@ body {
    simply unreadable, so brightness comes right down to bring the moon to a mid
    grey — which incidentally turns it into a halo behind the avatar, which is
    the best thing this image does. No saturate(): there is nothing to
-   desaturate, and it would only tint the JPEG's own noise. */
+   desaturate, and it would only tint the JPEG's own noise.
+
+   The brightness and the blur are BAKED INTO the file rather than applied as a
+   CSS filter. `filter: brightness(0.42) blur(2px)` on a full-screen layer has
+   to re-rasterise whenever anything above it recomposites, and this stack
+   recomposites constantly; `assets/bg-baked.jpg` is the same image with
+   `gblur=sigma=1.6` (2 CSS px at the desktop cover scale) and a 0.42 multiply
+   already applied. Measured mean luma 18.489 baked vs 18.484 filtered — the
+   same picture, for no per-frame cost. `assets/bg.jpg` stays as the source to
+   re-derive from; nothing loads it. */
 .photo {
   position: absolute;
   inset: -2%;
-  background: url("assets/bg.jpg") center 42% / cover no-repeat;
-  filter: brightness(0.42) blur(2px);
+  background: url("assets/bg-baked.jpg") center 42% / cover no-repeat;
+  /* Baking the filter out cost this element the composited layer the filter was
+     forcing for free, and without it the JPEG got rescaled into the .bg stack
+     every time the grain shifted. Pinning the layer back measured as the single
+     best change on the MangoPlayz build (0.844 -> 0.764 renderer CPU-seconds per
+     second), so both sites carry it. */
+  will-change: transform;
 }
 
 /* Vertical, and sized in rem rather than %. The card is 27.5rem at every
@@ -161,22 +175,27 @@ body {
   animation: drift-3 38s var(--ease-soft) infinite alternate;
 }
 
+/* Translate only — NO scale. Scaling a 90px-blurred element forces the blur to
+   be recomputed at the new size on every frame, which is the whole cost of the
+   effect; translating a layer that is already rasterised is free. The distance
+   went up a little to keep the same sense of movement without it.
+   (drift-2 went with aurora--2 — see Decisions.) */
 @keyframes drift-1 {
-  from { transform: translate3d(0, 0, 0) scale(1); }
-  to   { transform: translate3d(6rem, 4rem, 0) scale(1.14); }
-}
-@keyframes drift-2 {
-  from { transform: translate3d(0, 0, 0) scale(1.08); }
-  to   { transform: translate3d(-5rem, -3.5rem, 0) scale(1); }
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(7rem, 5rem, 0); }
 }
 @keyframes drift-3 {
   from { transform: translate3d(0, 0, 0); opacity: 0.75; }
   to   { transform: translate3d(-4rem, 5rem, 0); opacity: 1; }
 }
 
+/* inset was -50%, i.e. an element 2x the viewport in each direction — four
+   times the pixels, every one of them going through `mix-blend-mode: overlay`.
+   The shift animation only moves it by 2%, so -4% is all the overhang it ever
+   needed, and the blended area drops by ~3.7x for an identical picture. */
 .grain {
   position: absolute;
-  inset: -50%;
+  inset: -4%;
   opacity: 0.045;
   mix-blend-mode: overlay;
   pointer-events: none;
@@ -192,25 +211,26 @@ body {
   100% { transform: translate(2%, 1%); }
 }
 
+/* Scanlines and vignette were two elements; they are two background layers on
+   one element now. Both are static, so the merge costs nothing visually and
+   takes a full-viewport layer out of a stack that recomposites together. The
+   vignette is listed first because the first background layer paints on top,
+   which is the order the two separate elements had. The scanline alpha is
+   halved (0.045 -> 0.0225) to replace the `opacity: 0.5` that used to scale it
+   — that opacity would otherwise have faded the vignette too. */
 .scanlines {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.5;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0px,
-    rgba(0, 0, 0, 0) 2px,
-    rgba(0, 0, 0, 0.045) 3px,
-    rgba(0, 0, 0, 0.045) 4px
-  );
-}
-
-.vignette {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(125% 95% at 50% 50%, transparent 42%, rgba(4, 4, 4, 0.6) 100%);
+  background:
+    radial-gradient(125% 95% at 50% 50%, transparent 42%, rgba(4, 4, 4, 0.6) 100%),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.0225) 3px,
+      rgba(0, 0, 0, 0.0225) 4px
+    );
 }
 
 /* ==========================================================================
@@ -401,7 +421,10 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  padding: 0.5rem 1.05rem 0.5rem 0.9rem;
+  /* symmetric now the dot is gone — the shorter left padding existed to balance
+     a round shape against a text edge, and with text on both sides it just
+     looked off-centre */
+  padding: 0.5rem 1.05rem;
   border-radius: 999px;
   text-decoration: none;
   color: var(--text);
@@ -420,21 +443,8 @@ body {
   box-shadow: 0 10px 30px -12px rgba(160, 143, 122, 0.7);
 }
 
-.subs__dot {
-  width: 0.4rem;
-  height: 0.4rem;
-  border-radius: 50%;
-  background: var(--bone-200);
-  box-shadow: 0 0 0 0 rgba(167, 151, 127, 0.7);
-  animation: pulse 2.4s var(--ease-soft) infinite;
-  flex: none;
-}
-
-@keyframes pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(167, 151, 127, 0.55); }
-  70%  { box-shadow: 0 0 0 0.5rem rgba(167, 151, 127, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(167, 151, 127, 0); }
-}
+/* The pulsing "live" dot that sat left of the count is gone at the user's
+   request (2026-07-29). Its @keyframes went with it — nothing else used them. */
 
 .subs__count {
   font-size: 1rem;
@@ -686,25 +696,37 @@ body {
    The native cursor stays visible on purpose; see cursor.js.
    ========================================================================== */
 
+/* Two things were making this the most expensive 26px on the page, and both are
+   gone:
+
+   `mix-blend-mode: screen` forced everything under the glow to recomposite on
+   every single pointermove — and it bought nothing here. Over black, screen and
+   normal compositing give the identical result (screen against 0 is the source
+   colour, then alpha applies either way); the two only differ over lit pixels,
+   which on this page is the moon and little else.
+
+   `filter: blur(6px)` had to re-rasterise every frame, because the glow is
+   scaled per frame by the speed stretch and a scaled filter cannot be reused.
+   A radial gradient with soft stops IS a blur, so the spread moved into the
+   gradient and the box grew to cover what the blur used to add. */
 .cursor-glow {
   position: fixed;
   top: 0;
   left: 0;
   z-index: 9;
-  width: 26px;
-  height: 26px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   pointer-events: none;   /* must never eat a click */
   opacity: 0;
   will-change: transform, opacity;
   background: radial-gradient(
     circle,
-    rgba(167, 151, 127, 0.55) 0%,
-    rgba(160, 143, 122, 0.28) 45%,
+    rgba(167, 151, 127, 0.5) 0%,
+    rgba(163, 146, 124, 0.3) 26%,
+    rgba(160, 143, 122, 0.13) 48%,
     rgba(230, 230, 230, 0) 72%
   );
-  filter: blur(6px);
-  mix-blend-mode: screen; /* lifts off the dark page instead of greying it */
 }
 
 /* touch devices and reduced-motion never get the element at all, but belt and
@@ -1163,11 +1185,12 @@ html.gated body { overflow: hidden; }
    behind the glass.
    ========================================================================== */
 
+/* No `will-change` here on purpose: a running transform animation already gets
+   its own compositor layer, so declaring it only pinned 20+ extra layers. */
 .bat,
 .bat-fall {
   position: fixed;
   pointer-events: none;
-  will-change: transform, opacity;
 }
 
 .bat {
@@ -1189,53 +1212,42 @@ html.gated body { overflow: hidden; }
 .bat i,
 .bat-fall i {
   display: block;
-  will-change: transform;
   animation: bat-bob var(--bobDur) ease-in-out infinite alternate;
 }
 
-.bat svg,
-.bat-fall svg {
+/* The bat itself: one cell of assets/bats.webp, 6 flap phases across and 3
+   variants down. The rim light and the shadow are already in the pixels — see
+   the header of bats.js for why they are not CSS filters any more.
+
+   The cell is 1.5x the bat it holds (the glow needs somewhere to live), so the
+   box is scaled up to match and pulled back by the difference to keep the bat
+   itself the size --size asks for.
+
+   Row 2 is the drift, and it is black on purpose — real bats over a night sky.
+   That brings the opposite problem: over the 59% of the frame that is pure
+   black, a black bat is invisible. So it carries a moonlight RIM rather than a
+   shadow: the silhouette stays dark and only its edge catches the light, which
+   is how a bat actually looks against a moonlit sky. Two rims, a tight bright
+   one to draw the shape and a wide faint one so it registers over deep black —
+   both now baked into the atlas rather than computed every frame. */
+.bat b,
+.bat-fall b {
   display: block;
-  width: var(--size);
-  height: calc(var(--size) / 2);
-  color: var(--tint);
+  width: calc(var(--size) * 1.5);
+  height: calc(var(--size) * 0.75);
+  margin: calc(var(--size) * -0.125) 0 0 calc(var(--size) * -0.25);
+  background-image: url("assets/bats.webp");
+  background-repeat: no-repeat;
+  background-size: 600% 300%;
+  background-position-y: var(--row);
+  animation: bat-flap var(--flap) steps(6, jump-none) infinite alternate;
 }
 
-/* The swarm is moonlit, so it needs a DARK shadow to separate when it crosses
-   the moon; over black its own value already carries it. */
-.bat svg {
-  filter:
-    blur(var(--blur))
-    drop-shadow(0 0 5px rgba(167, 151, 127, 0.4))
-    drop-shadow(0 3px 8px rgba(0, 0, 0, 0.9));
-}
-
-/* The drift is black, which is the point — real bats over a night sky. That
-   brings the opposite problem: over the 59% of the frame that is pure black, a
-   black bat is invisible. So it gets a moonlight RIM rather than a shadow. The
-   silhouette stays dark and only its edge catches the light, which is how a bat
-   actually looks against a moonlit sky. Two rims: a tight bright one to draw
-   the shape, a wide faint one so it still registers over deep black. */
-.bat-fall svg {
-  filter:
-    blur(var(--blur))
-    drop-shadow(0 0 3px rgba(167, 151, 127, 0.9))
-    drop-shadow(0 0 12px rgba(230, 230, 230, 0.42));
-}
-
-/* Wings scale independently around the body's centre line, which is what makes
-   this read as flight rather than a shape wobbling. */
-.bat__wing {
-  transform-origin: 50% 50%;
-  animation: bat-flap var(--flap) ease-in-out infinite alternate;
-}
-
-.bat__wing--l { transform-origin: 100% 50%; }
-.bat__wing--r { transform-origin: 0% 50%; }
-
+/* jump-none so the 0%-100% sweep lands on all six frames inclusive; `alternate`
+   plays it back down again, which is the ping-pong the old scale flap had */
 @keyframes bat-flap {
-  from { transform: scaleY(1)   scaleX(1); }
-  to   { transform: scaleY(0.28) scaleX(0.88); }
+  from { background-position-x: 0%; }
+  to   { background-position-x: 100%; }
 }
 
 @keyframes bat-bob {
@@ -1323,6 +1335,51 @@ html.gated body { overflow: hidden; }
      under the ~12px floor where small type stops being comfortable */
   .tile__title { font-size: 0.98rem; }
   .tile__sub { font-size: 0.8rem; }
+}
+
+/* ==========================================================================
+   Adaptive quality — see quality.js, which sets data-q on <html> from measured
+   frame times. The page keeps its shape at every tier; what it sheds is the
+   work that costs the most per frame and shows the least.
+   ========================================================================== */
+
+/* mid: the full-screen blends go, and the glass gets thinner. Everything still
+   moves, so it still reads as the same page. */
+[data-q="mid"] .grain { display: none; }
+
+[data-q="mid"] .tile,
+[data-q="mid"] .player,
+[data-q="mid"] .subs {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* low: nothing that costs per-frame work survives. The auroras hold their
+   position instead of drifting, the backdrop blur goes (it re-blurs whenever
+   anything moves behind it), and the cursor trail is gone — cursor.js parks its
+   loop when it sees this tier, so the element is not merely hidden. */
+/* the scanlines stay: they are static, and once the grain is gone and the
+   auroras are still, the whole .bg stack composites once and is reused. Hiding
+   them would also take the vignette with them, since the two are one element */
+[data-q="low"] .grain,
+[data-q="low"] .cursor-glow { display: none; }
+
+[data-q="low"] .aurora { animation: none; }
+
+[data-q="low"] .tile,
+[data-q="low"] .player,
+[data-q="low"] .subs,
+[data-q="low"] .toast,
+[data-q="low"] .gate {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* the glass carried some of the tile's separation from the photograph, so give
+   it back as opacity rather than leaving the tiles floating */
+[data-q="low"] {
+  --tile-bg: rgba(255, 255, 255, 0.075);
+  --tile-bg-hover: rgba(255, 255, 255, 0.12);
 }
 
 /* ==========================================================================

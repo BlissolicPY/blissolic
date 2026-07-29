@@ -41,54 +41,133 @@ Files touched: `CLAUDE.md` and `.claude/memory/` only.
   Moving a tile means moving its `--i:` too — that's the reveal stagger, and out of sequence the
   entrance animates in a different order than the eye reads.
 
+2026-07-29 (later still) — **the performance work is done and measured**; see "Performance" below.
+`assets/bats.webp` and `assets/bg-baked.jpg` are new, `quality.js` is new.
+
 Next concrete steps, in order:
-1. Apply the perf fixes listed under "Performance" — the bats first, they're worth more than
-   everything else combined.
-2. Re-measure with the same harness to prove the fix rather than assume it.
-3. Point `blissolic.xyz` at the Pages site (register/DNS + set the custom domain in Pages), or
+1. Point `blissolic.xyz` at the Pages site (register/DNS + set the custom domain in Pages), or
    change `canonical`/`og:site_name`/footer back to the github.io URL until it exists.
-4. The `blissolic.com` header comments in `main.js`, `player.js`, `bats.js`, `style.css` are stale
-   — the domain is `.xyz` now.
+2. The `blissolic.com` header comments in `main.js`, `player.js`, `style.css` are stale — the domain
+   is `.xyz` now. (`bats.js` was rewritten and says `.xyz`.)
 
 Earlier: 2026-07-14 built from scratch as a port of `../Jona Website`; 2026-07-28 per-tile counts +
 cursor trail + background photo; 2026-07-29 the noir rebuild and the page-view counter.
 
-## Performance (measured 2026-07-29, NOT yet fixed)
+## Performance (diagnosed and FIXED 2026-07-29)
 
-Headed Chrome 150, 1920x889, CPU throttled 6x via CDP `Emulation.setCPUThrottlingRate` to stand in
-for a weaker machine, pointer sweeping the tile stack. **Baseline 19.6 fps / 48.5 ms median frame**
-— at 48 ms a frame, `:hover` lands 3+ frames late, which is precisely the reported symptom. One
-suspect disabled at a time, same page, no reload:
+A visitor reported the page felt laggy and that a tile's glow arrived late. Real, reproduced, and
+now fixed. The whole problem was one shape: **effects that re-rasterise every frame**, rather than
+effects that are drawn once and then composited.
 
-| config | fps | median |
-|---|---|---|
-| baseline | 19.6 | 48.5 ms |
-| no grain | 20.3 | 48.5 |
-| no backdrop-filter | 23.2 | 36.3 |
-| no scanlines+vignette | 29.7 | 30.3 |
-| no `.photo` blur(2px) | 36.4 | 24.3 |
-| no cursor glow | 37.0 | 24.3 |
-| no auroras | 37.8 | 24.3 |
-| **no bats** | **48.5** | **18.2** |
-| everything off | 83.0 | 12.1 |
+### Result
 
-- **The bats dominate.** 20 `.bat-fall`, each an `<svg>` carrying `blur() + 2x drop-shadow()`, with
-  the wing paths animating *inside* that filter — so all three filters re-rasterise on the main
-  thread every flap frame, twenty times over, plus 20 promoted layers from `will-change`.
-- **The costs do not sum.** Removing any single full-screen layer from `.bg` roughly doubles fps,
-  because `.bg` is a 7-layer stack containing a 4x-viewport `mix-blend-mode: overlay` grain and the
-  auroras animate forever, so the whole stack recomposites every frame. That's also why `grain` and
-  `backdrop-filter` look cheap alone — they're carried by the stack, not separate from it.
-- **The cursor glow is why it's worst while hovering.** `mix-blend-mode: screen` on a moving element
-  forces the region beneath it to recomposite on every pointermove. 26px element, 1.9x frame cost.
-- Never trust "works fine here": this machine is an RTX 3080 at 165 Hz and measures a flat 60+ fps
-  unthrottled. Frame deltas quantise to 6.06 ms, so p50 48.5 ms is 8 dropped vsyncs, not noise.
+Headed Chrome, 1920x889, CPU throttled **8x** via CDP, pointer sweeping the tile stack for ~7s
+after the swarm settles. Three passes per arm, alternating, medians reported. "before" is the
+previous commit served from a pinned copy so both arms run under identical machine load:
 
-Planned fixes (none applied): bake the bat rim/shadow into the SVG instead of CSS filters; cut the
-aurora blur radius and drop its animated `scale`; pre-blur `bg.jpg` and drop `.photo`'s `blur(2px)`;
-shrink `.grain` from `inset:-50%` to 1x viewport.
+| arm | fps | p50 | frames >25 ms |
+|---|---|---|---|
+| before | 11.8 | 78.8 ms | 100% |
+| after, identical visuals (`?q=high`) | 18.2 | 54.5 ms | 99% |
+| after, quality ladder deciding | **31.2** | **30.3 ms** | **59%** |
+
+And unthrottled, measuring renderer CPU seconds burned per wall second (4 passes, medians; the
+arms' ranges do not overlap): **0.808 -> 0.715**, an 11.5% cut in the work the page does at
+identical visuals.
+
+### What was actually wrong
+
+- **The bats dominated.** 20 `.bat-fall`, each an `<svg>` carrying `blur() + 2x drop-shadow()`,
+  with the wing paths animating *inside* that filter — so all three filters re-rasterised on the
+  main thread every flap frame, twenty times over. Killing them outright took a 6x-throttled page
+  from 53.8 to 107.4 fps, more than everything else combined.
+- **A scaled blur cannot be reused.** The auroras animated `scale(1 -> 1.14)` on a `blur(90px)`
+  element, and the cursor glow animated `scale()` on a `blur(6px)` one. Translating a rasterised
+  layer is free; scaling it forces the blur to be recomputed at the new size every frame.
+- **The `.bg` stack recomposited as a unit.** Seven full-screen layers, one of them a 4x-viewport
+  `mix-blend-mode: overlay` grain, with the auroras animating forever underneath. That is why the
+  original one-suspect-off table looked like everything was expensive — removing any single layer
+  made the blend cheaper for all of them.
+- **`mix-blend-mode: screen` on the cursor glow** forced the region beneath it to recomposite on
+  every pointermove, which is why it felt worst *while hovering* — the reported symptom.
+
+### What was done
+
+1. **Bat frames are pre-rendered** into `assets/bats.webp` (6 flap phases across, 3 variants down,
+   66KB), with the rim light and shadow already in the pixels. Playback is a `steps(6, jump-none)`
+   animation on `background-position`, so a flap costs a repaint of one small box at the step
+   boundaries instead of three filters re-rasterising every frame. See the header of `bats.js`.
+2. **`.photo`'s filter is baked into the file.** `assets/bg-baked.jpg` carries the `brightness(0.42)`
+   and the 2px blur; `assets/bg.jpg` stays as the source and is no longer loaded. Verified by mean
+   luma: 18.489 baked vs 18.484 filtered.
+3. **Auroras translate, they don't scale.** Grain went from `inset: -50%` (4x the viewport, all of
+   it blended) to `-4%`, which is all the overhang its 2% shift ever needed.
+4. **Scanlines and vignette merged into one element**, two background layers, one fewer full-screen
+   layer in a stack that recomposites together.
+5. **The cursor glow lost both its blend mode and its filter.** Over black, `screen` and normal
+   compositing produce the same result, so the blend was pure cost; the 6px blur moved into the
+   gradient stops with the box grown to match.
+6. **`.photo` is pinned to its own layer** with `will-change: transform`. Baking the filter out also
+   removed the composited layer the filter had been forcing for free, and without it the JPEG was
+   rescaled into the `.bg` stack every time the grain shifted. This measured as the single largest
+   change on the MangoPlayz build.
+7. **The subscriber pill's dot is gone** (user's request, 2026-07-29) — and it was an infinite
+   `box-shadow` animation, i.e. a repaint every frame, so it was also the cheapest win here.
+8. **`quality.js`** — see below.
+
+### Method notes (they cost time to re-learn)
+
+- **Never trust "works fine here."** This machine is an RTX 3080 at 165 Hz and measures a flat 60+
+  fps no matter what is broken. Everything above is CDP CPU throttling.
+- **A single-pass one-suspect-off table is not trustworthy.** Re-running the original 6x table
+  produced *monotonically worsening* numbers in the order the cases ran — "no cursor glow" appearing
+  to be slower than baseline — because page state and machine load drift across a session. Only the
+  bats survived as a real signal. Trustworthy comparisons need **alternating arms and medians of
+  repeated passes**, which is what the result table above is.
+- Frame deltas quantise to the refresh interval (6.06 ms at 165 Hz), so a p50 of 42 ms is seven
+  dropped vsyncs, not a noisy average.
+- `?q=high|mid|low` pins a quality tier, which is how each rung gets looked at and how before/after
+  compare like with like.
+- **fps was too noisy on this machine to resolve 10-20% effects** once several local servers and a
+  headed Chrome were competing for cores; one bisect had the same arm swing 11 -> 20 fps between
+  passes. The instrument that worked is **renderer CPU seconds per wall second** from CDP
+  `Performance.getMetrics` (`ProcessTime` delta / `Timestamp` delta), unthrottled. It measures the
+  work the page costs rather than what the machine happened to have spare, and its arm ranges came
+  out disjoint where fps ranges overlapped completely.
+- **Verify the stylesheet actually parsed.** A comment edit here left prose outside a `/* */` pair,
+  which made Chrome drop the whole `.photo` rule — so the background image silently stopped
+  rendering and a full round of "after" measurements was quietly measuring a page with one less
+  full-screen layer. Two checks now exist: `/*` and `*/` counts must match in `style.css`, and
+  `[...document.styleSheets].find(...).cssRules` must contain the selectors you edited.
+
+## Adaptive quality (`quality.js`, added 2026-07-29)
+
+Sets `data-q` on `<html>` to `high`, `mid` or `low` and fires `mp:quality` on change. CSS reads it
+for the effects it owns; `bats.js` reads it for how many bats to spawn.
+
+- **It measures rather than sniffs.** Static hints (`hardwareConcurrency <= 4`, `deviceMemory <= 4`,
+  `pointer: coarse`) only choose a *starting* tier — `hardwareConcurrency` says nothing about the
+  GPU and a phone with eight cores can be thermally throttled to a crawl. The real decision comes
+  from the p50 of ~50 real frames, sampled 2.6s after entry and again at 11s.
+- **p50, not mean**: one 300ms stall from a font swap would drag a mean under the threshold and
+  condemn a machine that is fine.
+- **It only ever goes down.** A page that quietly drops an effect reads as "this is how it looks";
+  one that adds effects back mid-visit reads as broken, and a wrong upgrade oscillates.
+- **The probe waits 2.6s.** The reveal and the 70-bat swarm are the heaviest two seconds the page
+  ever has; judging on those would downgrade a machine that holds 60fps for the rest of the visit.
+- Tiers: **mid** drops the grain and thins the backdrop blur to 8px, and halves the bats; **low**
+  stops the auroras, drops backdrop-filter entirely (it re-blurs whenever anything moves behind it),
+  kills the cursor trail and the drift bats, and lifts `--tile-bg` to give back the separation the
+  glass was providing.
 
 ## Key Files
+- `quality.js` — the adaptive quality tier. Load it FIRST; everything else reads `data-q`.
+- `assets/bats.webp` — the pre-rendered flap atlas. Regenerate it if the silhouette or either glow
+  changes; the generator is described in the header of `bats.js`, and the glow radii in it are baked
+  per row for the size that row renders at (a baked glow scales with the sprite, a CSS one did not —
+  getting this wrong turned the big foreground bats into glowing clouds on the first attempt).
+- `assets/bg-baked.jpg` — the background with its filters already applied. `assets/bg.jpg` is the
+  source; nothing loads it.
 - `index.html` — the whole page; `og:image` absolute (YouTube CDN) and **no** `og:url`, both
   inherited from the Jona site on purpose (see Decisions).
 - `main.js` — live sub-count fetch + `abbreviate()`.
