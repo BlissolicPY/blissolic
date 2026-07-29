@@ -1066,10 +1066,17 @@ html.gated body { overflow: hidden; }
 
 .gate[hidden] { display: none; }
 
-/* set by player.js just before removal, so it dissolves instead of vanishing */
+/* Set just before removal, so it dissolves instead of vanishing.
+
+   It deliberately KEEPS pointer-events. It used to set `pointer-events: none`
+   here, and on a phone that made tapping "click anywhere to enter" open a
+   random link: a tap fires touchstart, the gate dismisses, and then the browser
+   synthesises the mouse/click from that same tap — by which point the gate no
+   longer hit-tested, so the click fell through to whichever tile was under the
+   finger. Staying hit-testable for the 0.6s fade means that phantom click lands
+   on the gate, which does nothing. The gate is `hidden` immediately after. */
 .gate.is-leaving {
   animation: gate-out 0.6s var(--ease) forwards;
-  pointer-events: none;
 }
 
 @keyframes gate-in {

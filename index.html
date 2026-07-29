@@ -5,23 +5,40 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
 <title>Blissolic</title>
-<meta name="description" content="interrogating and exposing. All of Blissolic's links in one place.">
-<meta name="theme-color" content="#A7977F">
+<meta name="description" content="All of Blissolic's links in one place.">
+<!-- Discord (and most chat clients) paint the embed's accent bar from
+     theme-color. The bone accent read as a beige stripe against a dark embed;
+     the page's own near-black matches the site instead. -->
+<meta name="theme-color" content="#0B0B0B">
 
 <link rel="canonical" href="https://blissolic.xyz/">
 <!-- No og:url: crawlers fall back to whatever URL was actually requested, so
      link previews stay correct on preview/tunnel hosts as well as on the live
-     domain. og:image must be absolute (crawlers don't resolve relative paths),
-     and points at YouTube's CDN so it resolves from any host. -->
+     domain.
+
+     og:image is now SELF-HOSTED, which it could not be before blissolic.xyz
+     existed: crawlers don't resolve relative paths and don't run JS, so an
+     absolute URL on a domain that didn't answer would have broken every
+     preview. It pointed at the YouTube CDN for that reason, and that CDN still
+     serves the OLD avatar — which is why the embed's picture stopped matching
+     the site after the noir rebuild.
+
+     assets/og.jpg is frame one of the animated avatar, padded square in the
+     page's own black (the source is 500x400, so scaling it square would have
+     stretched it). A GIF is a bad idea here: not every client animates one, and
+     some will just show a broken thumbnail. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="blissolic.xyz">
 <meta property="og:title" content="Blissolic">
-<meta property="og:description" content="interrogating and exposing. All of Blissolic's links in one place.">
-<meta property="og:image" content="https://yt3.googleusercontent.com/QSdfo_mZ24ekmy4_kUdRvNhSrw-xngEH67JhKemz8AEM8w-8HUJ--ZGS_nCk63H1lFIKRoPxVUM=s900-c-k-c0x00ffffff-no-rj">
+<meta property="og:description" content="All of Blissolic's links in one place.">
+<meta property="og:image" content="https://blissolic.xyz/assets/og.jpg">
+<meta property="og:image:width" content="600">
+<meta property="og:image:height" content="600">
+<meta property="og:image:alt" content="Blissolic's avatar: a bat-caped figure on a rooftop against the moon">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Blissolic">
-<meta name="twitter:description" content="interrogating and exposing. All of Blissolic's links in one place.">
-<meta name="twitter:image" content="https://yt3.googleusercontent.com/QSdfo_mZ24ekmy4_kUdRvNhSrw-xngEH67JhKemz8AEM8w-8HUJ--ZGS_nCk63H1lFIKRoPxVUM=s900-c-k-c0x00ffffff-no-rj">
+<meta name="twitter:description" content="All of Blissolic's links in one place.">
+<meta name="twitter:image" content="https://blissolic.xyz/assets/og.jpg">
 
 <link rel="icon" href="assets/pfp.gif">
 <link rel="apple-touch-icon" href="assets/pfp.gif">
@@ -36,7 +53,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
 <!-- ?v= bumped whenever style.css changes: browsers (and the local dev server)
      hold the old stylesheet otherwise, and a redesign silently doesn't appear -->
-<link rel="stylesheet" href="style.css?v=12">
+<link rel="stylesheet" href="style.css?v=13">
 
 <script>
 /* The intro gate lives here, inline and ahead of everything, for two reasons.
@@ -57,7 +74,22 @@
 
   var EVENTS = ["pointerdown", "touchstart", "keydown"];
 
-  function enter() {
+  function enter(e) {
+    /* A tap is not one event. It fires pointerdown/touchstart, and then — after
+       the finger lifts — the browser synthesises mousedown/mouseup/click from
+       it. Dismissing on the first of those means the synthetic click arrives
+       when the gate is already going, so on a phone "tap anywhere to enter"
+       could open whichever link happened to be under the finger.
+
+       Two guards, because one is not enough on its own: swallow the touch's
+       default action here so no compatibility click is generated, and keep the
+       gate hit-testable while it fades (see .gate.is-leaving in style.css) so
+       that anything that still gets through lands on the gate instead. */
+    if (e && e.cancelable &&
+        (e.type === "touchstart" || e.pointerType === "touch")) {
+      e.preventDefault();
+    }
+
     EVENTS.forEach(function (t) { window.removeEventListener(t, enter, true); });
     root.classList.remove("gated");
 
@@ -70,7 +102,11 @@
     window.dispatchEvent(new CustomEvent("mp:enter"));
   }
 
-  EVENTS.forEach(function (t) { window.addEventListener(t, enter, { capture: true, once: true }); });
+  /* passive: false because touchstart listeners on window are passive by
+     default, and a passive listener's preventDefault() is ignored */
+  EVENTS.forEach(function (t) {
+    window.addEventListener(t, enter, { capture: true, once: true, passive: false });
+  });
 })();
 </script>
 </head>
@@ -255,8 +291,8 @@
           <svg class="ico-vol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.2L12 5.6v12.8L7.2 14.5H4z"/><path d="M15.6 9.2a3.9 3.9 0 0 1 0 5.6"/><path d="M18 6.8a7.3 7.3 0 0 1 0 10.4"/></svg>
           <svg class="ico-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.2L12 5.6v12.8L7.2 14.5H4z"/><path d="M16.2 9.8l4.6 4.6M20.8 9.8l-4.6 4.6"/></svg>
         </button>
-        <input class="player__slider" id="vol" type="range" min="0" max="100" value="28"
-               style="--vol:28" aria-label="Volume">
+        <input class="player__slider" id="vol" type="range" min="0" max="100" value="24"
+               style="--vol:24" aria-label="Volume">
       </span>
     </div>
   </section>
@@ -286,7 +322,7 @@
 <!-- first, so the tier is on <html> before anything reads it -->
 <script src="quality.js?v=1"></script>
 <script src="main.js?v=5"></script>
-<script src="player.js?v=1"></script>
+<script src="player.js?v=2"></script>
 <script src="cursor.js?v=5"></script>
 <script src="bats.js?v=4"></script>
 </body>

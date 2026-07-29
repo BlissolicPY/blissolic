@@ -21,12 +21,17 @@
         carries perceived loudness 0-100 and is raised to this power to get the
         amplitude the element wants.
 
-     2. VOLUME_DEFAULT is a slider position, NOT an amplitude. 28 maps to about
-        0.06 — quiet, because this is a background bed under a link page.
+     2. VOLUME_DEFAULT is a slider position, NOT an amplitude. 24 maps to about
+        0.044 — quiet, because this is a background bed under a link page.
 
-     Turn the whole page down by lowering VOLUME_DEFAULT alone. */
+     Turn the whole page down by lowering VOLUME_DEFAULT alone.
+
+     Was 28; taken down 15% to 24 on request (2026-07-29). Because of the curve
+     that is a bigger cut than it looks: amplitude 0.0625 -> 0.0442, about 3 dB.
+     Anyone who has already moved the slider keeps their own setting — it is
+     stored per visitor, so this only changes the first-visit default. */
   const VOLUME_CURVE = 2.2;
-  const VOLUME_DEFAULT = 28;
+  const VOLUME_DEFAULT = 24;
 
   const el = {
     root:  document.getElementById("player"),

@@ -58,6 +58,18 @@ Files touched: `CLAUDE.md` and `.claude/memory/` only.
 
 2026-07-29 (last) — **`blissolic.xyz` is registered and live**, HTTPS enforced. See Current State.
 
+2026-07-29 (after that) — five fixes off the back of using the live site:
+1. **The phone bug**: tapping "click anywhere to enter" opened a random link. Cause and fix under
+   Decisions; it was `pointer-events: none` on the leaving gate, and desktop could not reproduce it.
+2. **Music down 15%** — `VOLUME_DEFAULT` 28 -> 24 in `player.js`. Because of the 2.2 curve that is
+   amplitude 0.0608 -> 0.0433, i.e. **-2.95 dB / 29% quieter**, not 15% quieter. If 15% *quieter*
+   was meant rather than 15% off the control, the value is 26. Nothing is written to storage until a
+   visitor moves the slider, so returning visitors get the new default too.
+3. **Link-preview text** is `All of Blissolic's links in one place.` on all three description tags.
+   The page's own bio line still reads "interrogating and exposing" — only the embed changed.
+4. **Embed accent bar** now the page's near-black via `theme-color`.
+5. **Embed thumbnail** now the site's actual avatar, self-hosted at `assets/og.jpg`.
+
 Next concrete steps, in order:
 1. Add the `www` CNAME at Porkbun (host `www` → `blissolicpy.github.io`). Not on the root — Porkbun
    rejects that, correctly.
@@ -336,10 +348,30 @@ intro gate, and bats replacing the sibling sites' leaves/warp.
   silently went to `0` within hours during the Jona build. If the count looks broken, re-test each
   endpoint before touching code.
 
-- **og:image is absolute (YouTube CDN) and og:url is omitted.** Crawlers don't resolve relative
-  paths and don't run JS, so a self-hosted og:image breaks previews on every tunnel host before the
-  domain is live; omitting og:url makes crawlers fall back to the requested URL, so embeds stay
-  correct everywhere.
+- **og:image is self-hosted now that the domain is live; og:url stays omitted.** It used to point at
+  the YouTube CDN, because crawlers don't resolve relative paths and don't run JS, so an absolute URL
+  on a domain that didn't answer would have broken every preview. That CDN still serves the **old**
+  avatar, which is why Discord's thumbnail stopped matching the site after the noir rebuild. It is
+  `https://blissolic.xyz/assets/og.jpg` now — frame one of `pfp.gif`, padded square in the page's own
+  black (the GIF is 500x400, so scaling it square would have stretched it). Not the GIF itself: not
+  every client animates one and some show a broken thumbnail instead.
+  - Omitting og:url still stands — crawlers fall back to the requested URL, so embeds stay correct
+    on preview hosts as well as the live domain.
+  - **Discord caches embeds per URL.** A changed og:image will not appear on a link already posted;
+    posting the URL with any query string (`?1`) forces a fresh fetch.
+
+- **`theme-color` is the Discord embed's accent bar.** It was `#A7977F`, the bone accent, which read
+  as a beige stripe against a dark embed. It is `#0B0B0B` now — the page's own near-black.
+
+- **The intro gate must stay hit-testable while it fades.** `.gate.is-leaving` used to set
+  `pointer-events: none`, and on a phone that made "tap anywhere to enter" open a random link: a tap
+  fires `touchstart`, the gate dismisses, and the browser then synthesises the mouse/`click` from
+  that same tap — by which point the gate no longer hit-tested, so the click fell through to
+  whichever tile was under the finger. **Desktop never reproduced it**, which is why it shipped.
+  Fixed two ways: the gate keeps `pointer-events` for its 0.6s fade, and the dismiss handler calls
+  `preventDefault()` on touch input (with `passive: false`, or the call is ignored) so no
+  compatibility click is generated at all. Reproduced and verified with CDP
+  `Input.dispatchTouchEvent`: shipped build opened a YouTube tab on tap, fixed build opens nothing.
 
 - **TikTok's tile is cyan `#25F4EE`, not its red `#FE2C55`.** The red collides with YouTube's tile
   two rows up and with the rose already in the palette. Cyan is the only tile accent that's
