@@ -27,14 +27,18 @@
 
   const rand = (min, max) => min + Math.random() * (max - min);
 
-  /* First attempt painted these in the page's blacks, on the logic that a bat
-     is a silhouette. Wrong here: a silhouette only reads against a LIT sky, and
-     this page is 47% pure black — black bats on black simply vanished.
+  /* Two different jobs, so two different palettes.
 
-     So they are moonlit instead: greys and bone, lifted off the dark by their
-     own value, with a dark drop-shadow underneath so they still separate when
-     they cross the one bright area (the planet's rim). */
-  const TINTS = ["#8F8475", "#979797", "#767676", "#A7977F"];
+     The SWARM crosses above the gate while the overlay is still fading, over
+     whatever happens to be behind it — so those stay moonlit greys, which read
+     anywhere.
+
+     The DRIFT is the background layer and is meant to look like real bats over
+     a night sky, so those are black. Black on a 59%-black page would normally
+     vanish; what saves it is the rim — see the bone drop-shadow on .bat-fall in
+     style.css. The silhouette stays dark, its EDGE catches the moon. */
+  const SWARM_TINTS = ["#8F8475", "#979797", "#767676", "#A7977F"];
+  const FALL_TINTS = ["#000000", "#050505", "#0B0B0B", "#131313"];
 
   /* ---------- the swarm that crosses on entry ---------- */
 
@@ -71,7 +75,7 @@
         "--blur",
         `${(far * 1.6 + Math.max(0, (size - 120) / 45)).toFixed(2)}px`
       );
-      bat.style.setProperty("--tint", TINTS[Math.floor(Math.random() * TINTS.length)]);
+      bat.style.setProperty("--tint", SWARM_TINTS[Math.floor(Math.random() * SWARM_TINTS.length)]);
       // heavier things flap slower; a 200px bat at 0.18s looks like a moth
       bat.style.setProperty("--flap", `${(0.16 + size / 900).toFixed(3)}s`);
 
@@ -121,7 +125,7 @@
     bat.style.setProperty("--drift", `${rand(-10, 10).toFixed(1)}vw`);
     bat.style.setProperty("--op", rand(0.62, 0.95).toFixed(2));
     bat.style.setProperty("--blur", `${rand(0, 0.8).toFixed(2)}px`);
-    bat.style.setProperty("--tint", TINTS[Math.floor(Math.random() * TINTS.length)]);
+    bat.style.setProperty("--tint", FALL_TINTS[Math.floor(Math.random() * FALL_TINTS.length)]);
     bat.style.setProperty("--flap", `${(0.2 + size / 700).toFixed(3)}s`);
 
     const bob = document.createElement("i");

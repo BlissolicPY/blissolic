@@ -1133,15 +1133,28 @@ html.gated body { overflow: hidden; }
   width: var(--size);
   height: calc(var(--size) / 2);
   color: var(--tint);
-  /* a bat is a silhouette — it reads by being darker than what's behind it.
-     The moon-bone rim is what stops it vanishing into an equally black sky. */
-  /* two shadows doing opposite jobs, because this background is two-valued:
-     a dark one so a moonlit bat separates when it crosses the moon, and a bone
-     glow so it still reads over the 59% of the frame that is pure black */
+}
+
+/* The swarm is moonlit, so it needs a DARK shadow to separate when it crosses
+   the moon; over black its own value already carries it. */
+.bat svg {
   filter:
     blur(var(--blur))
-    drop-shadow(0 0 5px rgba(167, 151, 127, 0.45))
+    drop-shadow(0 0 5px rgba(167, 151, 127, 0.4))
     drop-shadow(0 3px 8px rgba(0, 0, 0, 0.9));
+}
+
+/* The drift is black, which is the point — real bats over a night sky. That
+   brings the opposite problem: over the 59% of the frame that is pure black, a
+   black bat is invisible. So it gets a moonlight RIM rather than a shadow. The
+   silhouette stays dark and only its edge catches the light, which is how a bat
+   actually looks against a moonlit sky. Two rims: a tight bright one to draw
+   the shape, a wide faint one so it still registers over deep black. */
+.bat-fall svg {
+  filter:
+    blur(var(--blur))
+    drop-shadow(0 0 3px rgba(167, 151, 127, 0.9))
+    drop-shadow(0 0 12px rgba(230, 230, 230, 0.42));
 }
 
 /* Wings scale independently around the body's centre line, which is what makes
