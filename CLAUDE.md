@@ -9,19 +9,81 @@ palette re-derived from a different avatar.
 No build step, no deps, no API keys — open `index.html` or serve the folder.
 
 ## Current State
-Complete and working. **Nothing blocks launch**: `discord.gg/bliss` was verified live against
-Discord's invite API (guild "Blissolic's Community", ~1,982 members, `expires_at: null` =
-permanent). X and TikTok both resolve. Only step left is pointing blissolic.com at it.
+Deployed and reachable. **Live at `https://blissolicpy.github.io/blissolic/`** (GitHub Pages, repo
+`BlissolicPY/blissolic`, source `main` @ `/`, HTTPS enforced) — verified 200 on 2026-07-29. All
+links resolve: `discord.gg/bliss` was verified live against Discord's invite API (guild "Blissolic's
+Community", ~1,982 members, `expires_at: null` = permanent); X and TikTok resolve too.
+
+Two things outstanding, both new on 2026-07-29:
+1. **`blissolic.xyz` does not resolve** — DNS lookup fails and Pages reports `"cname": null`, yet
+   `canonical`, `og:site_name` and the footer all already claim that domain (commit `8811e51`).
+2. **A measured performance problem** — see "Performance" below. Not fixed.
 
 (An earlier draft of this file said "unlike the Jona site, nothing blocks launch" — that was wrong.
 The Jona site's "dead invite" blocker turned out to be a false premise and `discord.gg/jona` is also
 live and permanent. Both sites are shippable.)
 
 ## Where We Left Off
-2026-07-14 — built from scratch this session as a port of `../Jona Website`. Everything wired and
-visually verified against the original at identical viewport size.
+2026-07-29 — a visitor reported the site "felt a little laggy" and that a tile's glow arrived late
+while he was already hovering it. Diagnosed and confirmed; **no code was changed this session**.
+Files touched: `CLAUDE.md` and `.claude/memory/` only.
 
-Next concrete step: deploy to blissolic.com. Nothing else outstanding.
+2026-07-29 (later) — two visitor-facing changes, both applied and pushed:
+- **Track replaced with a 0:38 segment of the same song** (`Notorious - Senkhi.mp3` off the user's
+  Desktop). Stream-copied so there's no second-generation encode, Adobe XMP tag block stripped, and
+  a Xing header written — the old file had none, so ffprobe had to estimate duration from bitrate.
+  603KB down from 1.9MB. `src` is `assets/notorious.mp3?v=2`: the filename never changes, so
+  without the query a browser and the Pages CDN both keep serving the old cut. **Bump it every time
+  the file is replaced.** No gain applied — the two cuts are 0.5 dB apart (−13.1 vs −12.6 dB mean)
+  and both peak at 0.0 dBFS, so any boost clips.
+- **Tile text legibility.** See the entry under Decisions.
+
+Next concrete steps, in order:
+1. Apply the perf fixes listed under "Performance" — the bats first, they're worth more than
+   everything else combined.
+2. Re-measure with the same harness to prove the fix rather than assume it.
+3. Point `blissolic.xyz` at the Pages site (register/DNS + set the custom domain in Pages), or
+   change `canonical`/`og:site_name`/footer back to the github.io URL until it exists.
+4. The `blissolic.com` header comments in `main.js`, `player.js`, `bats.js`, `style.css` are stale
+   — the domain is `.xyz` now.
+
+Earlier: 2026-07-14 built from scratch as a port of `../Jona Website`; 2026-07-28 per-tile counts +
+cursor trail + background photo; 2026-07-29 the noir rebuild and the page-view counter.
+
+## Performance (measured 2026-07-29, NOT yet fixed)
+
+Headed Chrome 150, 1920x889, CPU throttled 6x via CDP `Emulation.setCPUThrottlingRate` to stand in
+for a weaker machine, pointer sweeping the tile stack. **Baseline 19.6 fps / 48.5 ms median frame**
+— at 48 ms a frame, `:hover` lands 3+ frames late, which is precisely the reported symptom. One
+suspect disabled at a time, same page, no reload:
+
+| config | fps | median |
+|---|---|---|
+| baseline | 19.6 | 48.5 ms |
+| no grain | 20.3 | 48.5 |
+| no backdrop-filter | 23.2 | 36.3 |
+| no scanlines+vignette | 29.7 | 30.3 |
+| no `.photo` blur(2px) | 36.4 | 24.3 |
+| no cursor glow | 37.0 | 24.3 |
+| no auroras | 37.8 | 24.3 |
+| **no bats** | **48.5** | **18.2** |
+| everything off | 83.0 | 12.1 |
+
+- **The bats dominate.** 20 `.bat-fall`, each an `<svg>` carrying `blur() + 2x drop-shadow()`, with
+  the wing paths animating *inside* that filter — so all three filters re-rasterise on the main
+  thread every flap frame, twenty times over, plus 20 promoted layers from `will-change`.
+- **The costs do not sum.** Removing any single full-screen layer from `.bg` roughly doubles fps,
+  because `.bg` is a 7-layer stack containing a 4x-viewport `mix-blend-mode: overlay` grain and the
+  auroras animate forever, so the whole stack recomposites every frame. That's also why `grain` and
+  `backdrop-filter` look cheap alone — they're carried by the stack, not separate from it.
+- **The cursor glow is why it's worst while hovering.** `mix-blend-mode: screen` on a moving element
+  forces the region beneath it to recomposite on every pointermove. 26px element, 1.9x frame cost.
+- Never trust "works fine here": this machine is an RTX 3080 at 165 Hz and measures a flat 60+ fps
+  unthrottled. Frame deltas quantise to 6.06 ms, so p50 48.5 ms is 8 dropped vsyncs, not noise.
+
+Planned fixes (none applied): bake the bat rim/shadow into the SVG instead of CSS filters; cut the
+aurora blur radius and drop its animated `scale`; pre-blur `bg.jpg` and drop `.photo`'s `blur(2px)`;
+shrink `.grain` from `inset:-50%` to 1x viewport.
 
 ## Key Files
 - `index.html` — the whole page; `og:image` absolute (YouTube CDN) and **no** `og:url`, both
@@ -57,13 +119,29 @@ intro gate, and bats replacing the sibling sites' leaves/warp.
   read as flight rather than a shape wobbling.
 
 - **The player drives a LOCAL file, not a YouTube iframe** — unlike every sibling site. The track
-  is Senkhi's own (`assets/notorious.mp3`, 1:57), so there is no embed policy to fight, no API for
+  is Senkhi's own (`assets/notorious.mp3`, a 0:38 segment since 2026-07-29; was the full 1:57), so
+  there is no embed policy to fight, no API for
   an adblocker to kill, and real control over the element; `player.js` is about half the size of
-  the YouTube version as a result. `preload="none"` keeps 1.8MB off the wire until someone enters.
+  the YouTube version as a result. `preload="none"` keeps it off the wire until someone enters.
   Volume still uses the perceptual curve (`pos^2.2`), because `audio.volume` is linear amplitude
   exactly like YouTube's was.
 
 ## Decisions & Rationale
+
+- **Tile text was measurably unreadable, not just "a bit dim" (fixed 2026-07-29).** The handle line
+  (`.tile__sub`) sat on `--text-faint` = 0.34 alpha, weight 300, 12.5px. Sampled from a real
+  screenshot — glyph core vs the tile substrate (mean sRGB 34.5) — that is **2.92:1**, against a
+  4.5:1 WCAG AA minimum for small text. Three things were wrong at once, so all three moved: alpha
+  crosses 4.5:1 at 0.47 and the new `--text-soft` = 0.72 measures **8.10:1** (AAA); weight 300 is
+  spindly in Outfit at this size, now 400; 13.3px with +0.012em tracking, because small type wants
+  slightly positive tracking while the 16px title above still tracks negative.
+  - Hover on the handle now goes to full white. It was `--text-dim` (0.58), which against the new
+    0.72 base would have been a step *down* — hovering would have dimmed the thing you're reading.
+  - `--text-faint` is now glyph-only. The count moved to `--text-dim` at weight 600, the arrow to
+    0.46 (4.3:1) — an affordance, not decoration, and next to a brighter handle 0.34 read as a smudge.
+  - The email is the width constraint: 27 chars, no ellipsis wanted. It fits with 44px spare at a
+    360px viewport, so the phone override only needed 0.74 → 0.80rem (0.74rem was 11.8px, under the
+    ~12px floor where small type stops being comfortable).
 
 - **Per-tile follower counts (added 2026-07-28).** YouTube 25.6K, Discord members, TikTok and X
   followers, live and on the same 5-minute timer as the hero pill.

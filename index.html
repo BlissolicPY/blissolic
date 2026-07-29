@@ -33,7 +33,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
 <!-- ?v= bumped whenever style.css changes: browsers (and the local dev server)
      hold the old stylesheet otherwise, and a redesign silently doesn't appear -->
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 
 <script>
 /* The intro gate lives here, inline and ahead of everything, for two reasons.
@@ -204,9 +204,13 @@
   <!-- Unlike the sibling sites this plays a LOCAL file rather than a hidden
        YouTube iframe: the track is Senkhi's own and the user has the file, so
        there is no embed policy to fight, no API to be adblocked, and real
-       control over the audio. preload="none" keeps 1.8MB off the wire until
-       someone actually enters. -->
-  <audio id="track" src="assets/notorious.mp3" preload="none" loop></audio>
+       control over the audio. preload="none" keeps the download off the wire
+       until someone actually enters.
+
+       ?v= bumped whenever the file is replaced — the filename never changes, so
+       without it a browser (or the Pages CDN) keeps serving the old cut. v2 is
+       the 0:39 segment; v1 was the full 1:57. -->
+  <audio id="track" src="assets/notorious.mp3?v=2" preload="none" loop></audio>
 
   <section class="player" id="player" data-reveal style="--i:10"
            data-playing="false" data-muted="false" aria-label="Now playing">

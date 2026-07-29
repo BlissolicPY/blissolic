@@ -40,6 +40,12 @@
   --text:       var(--white);
   --text-dim:   rgba(246, 246, 246, 0.58);
   --text-faint: rgba(246, 246, 246, 0.34);
+  /* Handles (@blissolic, discord.gg/bliss, the email) sat on --text-faint and
+     were the least readable thing on the page: over the tile substrate that
+     lands at ~2.9:1, well under the 4.5:1 small-text minimum. 0.47 alpha is
+     where it crosses 4.5; 0.72 gives ~8.6:1 with room for the photograph
+     showing through the tile. --text-faint is now only used for glyphs. */
+  --text-soft:  rgba(246, 246, 246, 0.72);
 
   /* lifted from 0.035 / 0.08 once the photograph went in behind them — tiles
      need more separation over an image than over a flat ambient */
@@ -583,42 +589,48 @@ body {
 .tile__text {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.15rem;
   min-width: 0;
   flex: 1;
 }
 
 .tile__title {
-  font-size: 0.98rem;
-  font-weight: 500;
-  letter-spacing: -0.012em;
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: -0.008em;
 }
 
+/* The handle line. Three things were fighting it at once — 0.34 alpha, weight
+   300, and 12.5px — so all three moved: weight 300 is spindly at this size in
+   Outfit, and a hair of positive tracking is what small type wants (the title
+   above still tracks negative, which is right at 16px). */
 .tile__sub {
-  font-size: 0.78rem;
-  font-weight: 300;
-  color: var(--text-faint);
+  font-size: 0.83rem;
+  font-weight: 400;
+  letter-spacing: 0.012em;
+  color: var(--text-soft);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   transition: color 0.45s var(--ease);
 }
 
-.tile:hover .tile__sub { color: var(--text-dim); }
+/* hover goes to full white — --text-dim would now be a step DOWN from the base */
+.tile:hover .tile__sub { color: var(--text); }
 
 /* live follower/member count, right-aligned before the arrow */
 .tile__count {
   flex: none;
   margin-right: 0.15rem;
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 0.82rem;
+  font-weight: 600;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
-  color: var(--text-faint);
+  color: var(--text-dim);
   transition: color 0.45s var(--ease), opacity 0.4s var(--ease);
 }
 
-.tile:hover .tile__count { color: var(--bone-200); }
+.tile:hover .tile__count { color: var(--bone-100); }
 
 /* placeholder before the first fetch lands — dim, so it never looks broken */
 .tile__count[data-state="loading"] { opacity: 0.35; }
@@ -638,7 +650,9 @@ body {
   flex: none;
   display: grid;
   place-items: center;
-  color: var(--text-faint);
+  /* lifted off --text-faint with the text: at 0.34 it read as a smudge next to
+     a brighter handle line, and it's an affordance, not decoration (4.3:1) */
+  color: rgba(246, 246, 246, 0.46);
   transition: color 0.45s var(--ease), transform 0.45s var(--ease);
 }
 
@@ -1305,7 +1319,10 @@ html.gated body { overflow: hidden; }
 @media (max-width: 26rem) {
   .avatar { width: 7.25rem; height: 7.25rem; }
   .tile { padding: 0.85rem 0.95rem; gap: 0.8rem; }
-  .tile__sub { font-size: 0.74rem; }
+  /* still shrinks to fit the email on a narrow phone, but 0.74rem was 11.8px —
+     under the ~12px floor where small type stops being comfortable */
+  .tile__title { font-size: 0.98rem; }
+  .tile__sub { font-size: 0.8rem; }
 }
 
 /* ==========================================================================
