@@ -37,6 +37,9 @@ Files touched: `CLAUDE.md` and `.claude/memory/` only.
   the file is replaced.** No gain applied — the two cuts are 0.5 dB apart (−13.1 vs −12.6 dB mean)
   and both peak at 0.0 dBFS, so any boost clips.
 - **Tile text legibility.** See the entry under Decisions.
+- **Tile order is the user's, not a design call**: YouTube, TikTok, X, Discord, business email.
+  Moving a tile means moving its `--i:` too — that's the reveal stagger, and out of sequence the
+  entrance animates in a different order than the eye reads.
 
 Next concrete steps, in order:
 1. Apply the perf fixes listed under "Performance" — the bats first, they're worth more than
