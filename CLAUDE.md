@@ -9,15 +9,27 @@ palette re-derived from a different avatar.
 No build step, no deps, no API keys — open `index.html` or serve the folder.
 
 ## Current State
-Deployed and reachable. **Live at `https://blissolicpy.github.io/blissolic/`** (GitHub Pages, repo
+**Live at `https://blissolic.xyz/`** — the domain was registered at **Porkbun** on 2026-07-29 and
+now serves the Pages site: four apex `A` records to `185.199.108-111.153`, the tracked `CNAME` file
+holds `blissolic.xyz`, Pages `cname` is set and HTTPS is enforced with an approved certificate.
+`http://` 301s to `https://`, and the old `blissolicpy.github.io/blissolic/` 301s to the apex, so
+every link handed out before this still works. Verified in a real browser: 200, no failed requests,
+CSS/atlas/audio all load, counts live.
+
+- **`www.blissolic.xyz` is the one loose end**: it needs a `CNAME` record on host `www` pointing at
+  `blissolicpy.github.io`. Porkbun refuses a CNAME on the root (RFC — the apex has A records), which
+  is the mistake to avoid; the record goes on `www`, not on blank.
+- The certificate took ~3.5 minutes after the domain was set to become usable. Before that, HTTPS
+  fails with a trust error rather than a 404 — that is normal, not a misconfiguration.
+
+Previously live at `https://blissolicpy.github.io/blissolic/` (GitHub Pages, repo
 `BlissolicPY/blissolic`, source `main` @ `/`, HTTPS enforced) — verified 200 on 2026-07-29. All
 links resolve: `discord.gg/bliss` was verified live against Discord's invite API (guild "Blissolic's
 Community", ~1,982 members, `expires_at: null` = permanent); X and TikTok resolve too.
 
-Two things outstanding, both new on 2026-07-29:
-1. **`blissolic.xyz` does not resolve** — DNS lookup fails and Pages reports `"cname": null`, yet
-   `canonical`, `og:site_name` and the footer all already claim that domain (commit `8811e51`).
-2. **A measured performance problem** — see "Performance" below. Not fixed.
+Both of the things that were outstanding earlier on 2026-07-29 are now **done**: the domain resolves
+and serves (above), and the performance problem is fixed and measured (see "Performance"). The only
+remaining item is the `www` CNAME record.
 
 (An earlier draft of this file said "unlike the Jona site, nothing blocks launch" — that was wrong.
 The Jona site's "dead invite" blocker turned out to be a false premise and `discord.gg/jona` is also
@@ -44,11 +56,13 @@ Files touched: `CLAUDE.md` and `.claude/memory/` only.
 2026-07-29 (later still) — **the performance work is done and measured**; see "Performance" below.
 `assets/bats.webp` and `assets/bg-baked.jpg` are new, `quality.js` is new.
 
+2026-07-29 (last) — **`blissolic.xyz` is registered and live**, HTTPS enforced. See Current State.
+
 Next concrete steps, in order:
-1. Point `blissolic.xyz` at the Pages site (register/DNS + set the custom domain in Pages), or
-   change `canonical`/`og:site_name`/footer back to the github.io URL until it exists.
+1. Add the `www` CNAME at Porkbun (host `www` → `blissolicpy.github.io`). Not on the root — Porkbun
+   rejects that, correctly.
 2. The `blissolic.com` header comments in `main.js`, `player.js`, `style.css` are stale — the domain
-   is `.xyz` now. (`bats.js` was rewritten and says `.xyz`.)
+   is `.xyz` now. (`bats.js` and `quality.js` say `.xyz`.)
 
 Earlier: 2026-07-14 built from scratch as a port of `../Jona Website`; 2026-07-28 per-tile counts +
 cursor trail + background photo; 2026-07-29 the noir rebuild and the page-view counter.
