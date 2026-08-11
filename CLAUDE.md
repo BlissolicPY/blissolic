@@ -49,9 +49,9 @@ Files touched: `CLAUDE.md` and `.claude/memory/` only.
   the file is replaced.** No gain applied — the two cuts are 0.5 dB apart (−13.1 vs −12.6 dB mean)
   and both peak at 0.0 dBFS, so any boost clips.
 - **Tile text legibility.** See the entry under Decisions.
-- **Tile order is the user's, not a design call**: YouTube, TikTok, X, Discord, business email.
-  Moving a tile means moving its `--i:` too — that's the reveal stagger, and out of sequence the
-  entrance animates in a different order than the eye reads.
+- **Tile order is the user's, not a design call**: YouTube, TikTok, X, Discord, business email,
+  NameMC. Moving a tile means moving its `--i:` too — that's the reveal stagger, and out of
+  sequence the entrance animates in a different order than the eye reads.
 
 2026-07-29 (later still) — **the performance work is done and measured**; see "Performance" below.
 `assets/bats.webp` and `assets/bg-baked.jpg` are new, `quality.js` is new.
@@ -69,6 +69,12 @@ Files touched: `CLAUDE.md` and `.claude/memory/` only.
    The page's own bio line still reads "interrogating and exposing" — only the embed changed.
 4. **Embed accent bar** now the page's near-black via `theme-color`.
 5. **Embed thumbnail** now the site's actual avatar, self-hosted at `assets/og.jpg`.
+
+2026-08-11 — **a NameMC tile was added**, last in the list, on the same day and in the same shape
+as the Senkhi and Delpog pages. See the entry under Decisions. The workspace folder was also renamed
+back to `Blissolic Website`: a mis-escaped `mv` had left it as a literal `\`, so the backup repo saw
+all 28 tracked files as deleted and the Delpog project doc recorded this site as "not present on
+this Mac".
 
 Next concrete steps, in order:
 1. Add the `www` CNAME at Porkbun (host `www` → `blissolicpy.github.io`). Not on the root — Porkbun
@@ -385,6 +391,20 @@ intro gate, and bats replacing the sibling sites' leaves/warp.
 - **TikTok's tile is cyan `#25F4EE`, not its red `#FE2C55`.** The red collides with YouTube's tile
   two rows up and with the rose already in the palette. Cyan is the only tile accent that's
   distinct from everything else on the page.
+
+- **NameMC's tile is Minecraft's UI gold `#FFAA00` and it sits last (added 2026-08-11).** His IGN is
+  `blissolic` — the Mojang lookup returns it cased `Blissolic`, and namemc.com is case-insensitive,
+  so the link is `namemc.com/profile/blissolic`. Three calls worth keeping. It goes **below the
+  business email** because the owner's own framing was that NameMC is not that important. The accent
+  is gold rather than the obvious grass green because gold was the one warm hue free in all three of
+  the pages that got this tile — Senkhi's beam green is that page's single accent, and Delpog already
+  carries Spotify's — so one colour serves the whole family instead of three near-greens. And the
+  sub line reads `blissolic · Minecraft` rather than the bare name, because three other tiles here
+  already have a sub that is some form of @blissolic. The glyph is a hand-built isometric block,
+  three inset quads in one 24×24 fill path, matching the other brand marks' fill-not-stroke style.
+  **namemc.com cannot be fetched to check the link** — it answers curl with a Cloudflare "Just a
+  moment..." challenge. Verify an IGN with `api.mojang.com/users/profiles/minecraft/<name>`, which
+  returns the UUID and the canonical casing.
 
 ## Gotchas
 - **youtube.com/@handle serves a consent wall to this machine** ("Before you continue to YouTube"),
