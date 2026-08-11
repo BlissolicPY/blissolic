@@ -494,6 +494,11 @@ body {
 .tile[data-brand="tiktok"]  { --brand: #25F4EE; }
 .tile[data-brand="x"]       { --brand: #FFFFFF; }
 .tile[data-brand="mail"]    { --brand: var(--bone-200); }
+/* Minecraft's own UI gold. Every hue this page already spends is taken, and gold
+   is the one warm accent free on all three sibling pages, so the NameMC tile
+   reads the same across the family. The isometric block glyph carries the
+   platform; the colour only has to not collide. */
+.tile[data-brand="namemc"]  { --brand: #FFAA00; }
 
 .tile {
   position: relative;
